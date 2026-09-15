@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pine Discovery Workspace — Onboarding · V4 (Drag & Drop Flow)</title>
+<title>Pine Discovery Workspace — Onboarding · V5 (Drag & Drop Kanban)</title>
 <style>
 :root{
   --pine:#741b3b;
@@ -66,10 +66,17 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 .bar-row{display:grid;grid-template-columns:105px 1fr 35px;gap:10px;align-items:center;margin:13px 0;font-size:12px}.bar{height:8px;background:#ebe6e7;border-radius:99px;overflow:hidden}.bar i{height:100%;display:block;background:var(--pine);border-radius:99px}
 .decision{border-top:1px solid var(--line);padding:13px 0}.decision:first-child{border-top:0;padding-top:0}.decision b{display:block;font-size:13px}.decision span{font-size:12px;color:var(--muted)}
 .board-toolbar{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:18px}.filters{display:flex;gap:8px;flex-wrap:wrap}.filters select,.search{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;color:var(--ink)}
+
+/* KANBAN & DRAG AND DROP TASK BOARD */
 .kanban{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:14px;overflow-x:auto}
-.column{background:#ece7e8;border-radius:16px;padding:12px;min-height:520px}.col-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:4px 3px}.col-head b{font-size:12px}.count{background:#fff;border-radius:99px;padding:2px 7px;color:var(--muted);font-size:11px}
-.task{background:#fff;border:1px solid #e0e5e2;border-radius:14px;padding:14px;margin:9px 0;box-shadow:0 3px 10px rgba(18,35,31,.05);cursor:pointer}.task:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.column{background:#ece7e8;border-radius:16px;padding:12px;min-height:520px;transition:background .2s ease, border-color .2s ease;border:2px dashed transparent}
+.column.drag-over{background:#e2dadc;border-color:var(--pine)}
+.col-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:4px 3px}.col-head b{font-size:12px}.count{background:#fff;border-radius:99px;padding:2px 7px;color:var(--muted);font-size:11px}
+.task{background:#fff;border:1px solid #e0e5e2;border-radius:14px;padding:14px;margin:9px 0;box-shadow:0 3px 10px rgba(18,35,31,.05);cursor:grab;transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease}
+.task:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.task.dragging{opacity:0.45;transform:scale(0.98);cursor:grabbing}
 .tag{display:inline-flex;border-radius:99px;padding:4px 7px;font-size:9px;font-weight:850;letter-spacing:.06em;margin-bottom:10px}.tag.discovery{background:#d8c0ca}.tag.asis{background:#c9d7df}.tag.dados{background:#e8cda9}.tag.benchmark{background:#e2bcc7}.tag.hipotese{background:#d7dfbf}.tag.insight{background:#c7dbd4}.tag.wireframe{background:#d9cfe0}.tag.decisao{background:#ddd9d8}.tag.validacao{background:#ead7ae}
+.meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:var(--muted)}
 
 /* CASE VIEW TIMELINE */
 .case-line{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:25px 0}
@@ -181,7 +188,7 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
     <button data-view="flow">Flow & decisions</button>
     <button data-view="case">Case view</button>
   </nav>
-  <div class="mini"><span style="color:#c9a45c;font-weight:800">PROJECT</span><br><strong style="color:#fff">Digital Onboarding</strong><br><br>v0.4 · Pine visual system</div>
+  <div class="mini"><span style="color:#c9a45c;font-weight:800">PROJECT</span><br><strong style="color:#fff">Digital Onboarding</strong><br><br>v0.5 · Pine visual system</div>
 </aside>
 
 <main class="main">
@@ -212,7 +219,7 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 </section>
 
 <section class="view" id="board">
-  <div class="hero"><div><div class="eyebrow">Work in progress</div><h1>Task board</h1><div class="subtitle">Crie tarefas, registre evidências e acompanhe o avanço do discovery.</div></div></div>
+  <div class="hero"><div><div class="eyebrow">Work in progress</div><h1>Task board</h1><div class="subtitle">Arraste os cartões entre as colunas para atualizar o status e acompanhar o avanço.</div></div></div>
   <div class="board-toolbar">
     <div class="filters"><input class="search" id="search" placeholder="Buscar tarefa..." oninput="renderBoard()"><select id="tagFilter" onchange="renderBoard()"><option value="">Todos os temas</option></select></div>
     <button class="btn primary" onclick="openTask()">+ Nova tarefa</button>
@@ -410,15 +417,12 @@ const initial=[
  {id:8,title:'Fluxo To Be & Protótipo High-Fi',tag:'wireframe',status:'done',desc:'Arquitetura de informação reformulada para o novo cadastro simplificado.',evidence:'Validação visual indicou redução de 40% nas etapas percebidas.',imageUrl:'https://images.unsplash.com/photo-1616469829941-c7200edec809?auto=format&fit=crop&w=800&q=80'}
 ];
 
-/* FLUXO INICIAL SUPORTANDO LINHAS PARALELAS & REORDENAÇÃO */
 const initialAppFlow = [
   { id: 1, laneId: 'main', label: 'Início', type: 'start', actionLabel: '', errorLabel: '' },
   { id: 2, laneId: 'main', label: 'Digita Login / CPF', type: 'input', actionLabel: 'Avançar', errorLabel: '' },
   { id: 3, laneId: 'main', label: 'Valida Credencial?', type: 'decision', actionLabel: 'Sucesso', errorLabel: 'Erro: Credenciais Inválidas' },
   { id: 4, laneId: 'main', label: 'Digita Código SMS', type: 'process', actionLabel: 'Validado', errorLabel: 'Erro: Código Expirado' },
   { id: 5, laneId: 'main', label: 'Home do App', type: 'end', actionLabel: '', errorLabel: '' },
-  
-  /* LINHA DE FLUXO SECUNDÁRIA (ABAIXO) */
   { id: 6, laneId: 'sub1', label: 'Erro: Esqueci a Senha', type: 'start', actionLabel: '', errorLabel: '' },
   { id: 7, laneId: 'sub1', label: 'Insere Email de Recuperação', type: 'input', actionLabel: 'Enviar Link', errorLabel: 'Email não encontrado' },
   { id: 8, laneId: 'sub1', label: 'Redefine Nova Senha', type: 'process', actionLabel: 'Concluído', errorLabel: '' }
@@ -430,6 +434,7 @@ let appFlow = JSON.parse(localStorage.getItem('pineAppFlow')||'null') || initial
 let editingId = null;
 let editingFlowNodeId = null;
 let draggedNodeId = null;
+let draggedTaskId = null;
 
 function tagLabel(k){return TAGS.find(x=>x[0]===k)?.[1]||k}
 function statusLabel(k){return {backlog:'Backlog',doing:'Em andamento',review:'Review',done:'Concluída'}[k]}
@@ -448,16 +453,91 @@ function populateFilters(){
  const cit=document.getElementById('ciTag');cit.innerHTML=TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
 }
 
+/* RENDERIZADOR DO TASK BOARD E EVENTOS DE DRAG & DROP DE TAREFAS */
 function renderBoard(){
  const q=(document.getElementById('search')?.value||'').toLowerCase(), filter=document.getElementById('tagFilter')?.value||'';
  const cols=['backlog','doing','review','done'];
  document.getElementById('kanban').innerHTML=cols.map(s=>{
   const arr=tasks.filter(t=>t.status===s && (!filter||t.tag===filter) && (!q||(`${t.title} ${t.desc} ${t.evidence}`).toLowerCase().includes(q)));
-  return `<div class="column"><div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>${arr.map(taskHTML).join('')||'<div class="empty">Nenhuma tarefa</div>'}</div>`
+  return `
+    <div class="column" data-status="${s}">
+      <div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>
+      ${arr.map(taskHTML).join('')||'<div class="empty">Nenhuma tarefa</div>'}
+    </div>`
  }).join('');
+ setupTaskDragAndDrop();
 }
 
-function taskHTML(t){return `<article class="task" onclick="editTask(${t.id})"><span class="tag ${t.tag}">${tagLabel(t.tag)}</span><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.desc||'')}</p><div class="meta"><span>${statusLabel(t.status)}</span><span>↗ abrir</span></div></article>`}
+function taskHTML(t){
+  return `
+    <article class="task" draggable="true" data-task-id="${t.id}">
+      <span class="tag ${t.tag}">${tagLabel(t.tag)}</span>
+      <h3 style="margin:4px 0 6px;font-size:14px;color:var(--ink);">${escapeHtml(t.title)}</h3>
+      <p style="margin:0;font-size:12px;color:var(--muted);">${escapeHtml(t.desc||'')}</p>
+      <div class="meta">
+        <span>${statusLabel(t.status)}</span>
+        <button class="btn sm" onclick="editTask(${t.id}); event.stopPropagation();">✏️ Editar</button>
+      </div>
+    </article>
+  `;
+}
+
+function setupTaskDragAndDrop(){
+  const taskCards = document.querySelectorAll('.task');
+  const columns = document.querySelectorAll('.column');
+
+  taskCards.forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      draggedTaskId = parseInt(card.getAttribute('data-task-id'));
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.stopPropagation();
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      columns.forEach(col => col.classList.remove('drag-over'));
+    });
+
+    // Permite abrir modal no clique, mas evita abrir durante o arraste
+    card.addEventListener('click', (e) => {
+      if(!card.classList.contains('dragging')){
+        const id = parseInt(card.getAttribute('data-task-id'));
+        editTask(id);
+      }
+    });
+  });
+
+  columns.forEach(col => {
+    col.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+    });
+
+    col.addEventListener('dragleave', (e) => {
+      if (!col.contains(e.relatedTarget)) {
+        col.classList.remove('drag-over');
+      }
+    });
+
+    col.addEventListener('drop', (e) => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const targetStatus = col.getAttribute('data-status');
+
+      if(draggedTaskId && targetStatus){
+        const task = tasks.find(t => t.id === draggedTaskId);
+        if(task && task.status !== targetStatus){
+          task.status = targetStatus;
+          save();
+          renderAll();
+          showToast(`Tarefa movida para "${statusLabel(targetStatus)}"`);
+        }
+      }
+    });
+  });
+}
 
 function renderOverview(){
  const counts={backlog:0,doing:0,review:0,done:0};tasks.forEach(t=>counts[t.status]++);
@@ -532,7 +612,6 @@ function renderAppFlow(){
     return;
   }
 
-  // Agrupar etapas por Linhas (Lanes)
   const lanesMap = {
     'main': { title: 'Antes', items: [] },
     'sub1': { title: 'Depois', items: [] },
@@ -559,7 +638,7 @@ function renderAppFlow(){
   });
 
   container.innerHTML = lanesHTML;
-  setupDragAndDropEvents();
+  setupFlowNodeDragAndDrop();
 }
 
 function renderNodeHTML(node, index, totalInLane, laneKey){
@@ -587,7 +666,6 @@ function renderNodeHTML(node, index, totalInLane, laneKey){
           </div>
           <span class="node-text">${escapeHtml(node.label)}</span>
 
-          <!-- Ações Rápidas de Adição (Antes, Depois, Abaixo) -->
           <div class="flow-node-quick-add">
             <button class="btn sm" onclick="addNodeRelative(${node.id}, 'before')" title="Inserir Antes">+ Antes</button>
             <button class="btn sm" onclick="addNodeRelative(${node.id}, 'after')" title="Inserir Depois">+ Depois</button>
@@ -612,8 +690,7 @@ function renderNodeHTML(node, index, totalInLane, laneKey){
   `;
 }
 
-/* SISTEMA DRAG & DROP HTML5 */
-function setupDragAndDropEvents(){
+function setupFlowNodeDragAndDrop(){
   const wrappers = document.querySelectorAll('.flow-node-wrapper');
 
   wrappers.forEach(w => {
@@ -621,6 +698,7 @@ function setupDragAndDropEvents(){
       draggedNodeId = parseInt(w.getAttribute('data-id'));
       w.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
+      e.stopPropagation();
     });
 
     w.addEventListener('dragend', () => {
@@ -656,7 +734,6 @@ function reorderNodes(draggedId, targetId){
   if(draggedIndex === -1 || targetIndex === -1) return;
 
   const [draggedNode] = appFlow.splice(draggedIndex, 1);
-  // Alinha a linha (laneId) da etapa movida com o alvo
   draggedNode.laneId = appFlow[targetIndex > draggedIndex ? targetIndex - 1 : targetIndex].laneId || 'main';
   
   appFlow.splice(targetIndex, 0, draggedNode);
