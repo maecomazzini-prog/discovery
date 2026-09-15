@@ -42,8 +42,12 @@ button{cursor:pointer}
 .topbar{height:72px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}
 .crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--ink)}
 .top-actions{display:flex;gap:8px}
-.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 13px;font-weight:650}
-.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}.btn.lime{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 13px;font-weight:650;transition:all .15s ease}
+.btn:hover{background:#faf8f8}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}.btn.primary:hover{background:var(--pine-dark)}
+.btn.lime{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn.sm{padding:5px 9px;font-size:11px;border-radius:7px}
+.btn.danger{background:#fff;border-color:#e8b4b4;color:#b91c1c}.btn.danger:hover{background:#fef2f2}
 .content{padding:28px 30px 60px;max-width:1500px;margin:auto}
 .view{display:none}.view.active{display:block}
 .hero{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:24px}
@@ -66,32 +70,79 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 .tag{display:inline-flex;border-radius:99px;padding:4px 7px;font-size:9px;font-weight:850;letter-spacing:.06em;margin-bottom:10px}.tag.discovery{background:#d8c0ca}.tag.asis{background:#c9d7df}.tag.dados{background:#e8cda9}.tag.benchmark{background:#e2bcc7}.tag.hipotese{background:#d7dfbf}.tag.insight{background:#c7dbd4}.tag.wireframe{background:#d9cfe0}.tag.decisao{background:#ddd9d8}.tag.validacao{background:#ead7ae}
 .task h3{font-size:13px;margin:0 0 7px}.task p{font-size:11px;color:var(--muted);margin:0 0 12px}.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
 .case-line{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;margin:25px 0}.case-step{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 10px;min-height:105px}.case-step:not(:last-child):after{content:"→";position:absolute;right:-12px;top:40px;color:#98a29f;font-weight:800;z-index:2}.case-step strong{font-size:11px;display:block}.case-step span{font-size:10px;color:var(--muted);display:block;margin-top:7px}
-.flow{display:grid;grid-template-columns:1fr 1fr;gap:16px}.flow-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}.flow-title{font-weight:800;margin-bottom:16px}.node{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafbfa;margin:7px 0}.node small{display:block;color:var(--muted);font-size:10px}.arrow{text-align:center;color:var(--pine-2);font-weight:800}
+
+/* NOVO ESTILO: FLOW & DECISIONS ATUALIZADO */
+.flow-grid-top{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.flow-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.02)}
+.flow-title{font-weight:800;font-size:16px;color:var(--pine-dark);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.flow-title span{font-size:11px;background:var(--burgundy-soft);color:var(--pine);padding:3px 8px;border-radius:99px;font-weight:700}
+.node{border:1px solid var(--line);border-left:4px solid var(--pine);border-radius:12px;padding:12px 14px;background:#fdfcfc;margin:8px 0;transition:all .2s ease}
+.node:hover{border-color:var(--pine-2);transform:translateX(2px)}
+.node b{display:block;font-size:13px;color:var(--ink)}
+.node small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.arrow{text-align:center;color:var(--pine);font-weight:800;font-size:16px;margin:-2px 0}
+
+/* DECISION LOG ENHANCED */
+.decision-item{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;background:#fff;display:flex;flex-direction:column;gap:6px;transition:all .15s ease}
+.decision-item:hover{border-color:var(--pine-2);box-shadow:var(--shadow)}
+.decision-head-row{display:flex;justify-content:space-between;align-items:center}
+.decision-title{font-weight:750;font-size:14px;color:var(--pine-dark)}
+.decision-badge{background:var(--gold-soft);color:var(--pine-dark);font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.03em}
+.decision-body{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* NOVO: CONSTRUTOR DE FLUXO HORIZONTAL */
+.flow-builder-section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.02)}
+.flow-builder-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.flow-container-scroll{overflow-x:auto;padding:30px 10px 40px;background:#faf8f8;border:1px solid var(--line);border-radius:14px;min-height:220px;display:flex;align-items:center}
+.flow-container{display:flex;align-items:center;gap:16px;margin:0 auto;width:max-content}
+.flow-node-wrapper{display:flex;align-items:center;gap:16px;position:relative}
+
+/* TIPOS DE NÓS (NODE SHAPES) */
+.flow-node{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px 18px;min-width:130px;min-height:64px;font-weight:700;font-size:12px;color:var(--ink);background:#fff;border:2px solid var(--pine);box-shadow:0 4px 12px rgba(116,27,59,.08);position:relative;transition:all .2s ease}
+.flow-node:hover{transform:scale(1.03);box-shadow:0 6px 18px rgba(116,27,59,.15)}
+.flow-node .node-actions{position:absolute;top:-12px;right:-8px;display:none;gap:3px;z-index:5}
+.flow-node:hover .node-actions{display:flex}
+
+/* Forma: Início / Fim (Oval / Pílula) */
+.node-start, .node-end{border-radius:99px;background:var(--pine);color:#fff;border-color:var(--pine-dark)}
+/* Forma: Processo (Retângulo) */
+.node-process{border-radius:10px;background:#fff;border-color:var(--pine)}
+/* Forma: Decisão (Losango) */
+.node-decision{width:110px;height:110px;min-width:110px;min-height:110px;transform:rotate(45deg);background:var(--gold-soft);border-color:var(--gold);border-radius:8px;margin:0 15px}
+.node-decision .node-text{transform:rotate(-45deg);max-width:80px;line-height:1.2}
+.node-decision .node-actions{transform:rotate(-45deg);top:-10px;right:-10px}
+/* Forma: Entrada de dados (Paralelogramo) */
+.node-input{transform:skewX(-15deg);border-radius:6px;background:var(--burgundy-soft);border-color:var(--pine-2)}
+.node-input .node-text{transform:skewX(15deg)}
+.node-input .node-actions{transform:skewX(15deg);top:-10px;right:-5px}
+
+.flow-arrow{position:relative;width:32px;height:2px;background:var(--pine);display:flex;align-items:center;justify-content:flex-end}
+.flow-arrow::after{content:'';width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:7px solid var(--pine);margin-right:-2px}
+
 .modal{position:fixed;inset:0;background:rgba(8,24,21,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modal.show{display:flex}.dialog{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.25)}.dialog-head{display:flex;justify-content:space-between;gap:20px}.close{border:0;background:#edf1ef;border-radius:10px;width:34px;height:34px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;font-weight:800}.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfcfb}.field textarea{min-height:100px;resize:vertical}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .empty{padding:35px;text-align:center;color:var(--muted)}
 .toast{position:fixed;right:20px;bottom:20px;background:var(--pine);color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:50;box-shadow:var(--shadow)}
-@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.flow{grid-template-columns:1fr}.case-line{grid-template-columns:repeat(4,1fr)}.case-step:not(:last-child):after{display:none}}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.flow-grid-top{grid-template-columns:1fr}.case-line{grid-template-columns:repeat(4,1fr)}.case-step:not(:last-child):after{display:none}}
 @media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:12px;display:block}.brand{margin-bottom:10px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.sidebar .mini{display:none}.topbar{padding:0 16px}.content{padding:20px 15px 50px}.hero{display:block}.progress-wrap{width:100%;margin-top:20px}.cards{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:repeat(4,280px)}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 @media print{
-  .sidebar,.topbar,.top-actions,.board-toolbar,.btn,.filters,.modal,.toast{display:none!important}
+  .sidebar,.topbar,.top-actions,.board-toolbar,.btn,.filters,.modal,.toast,.node-actions,.flow-builder-header button{display:none!important}
   .app{display:block}.content{padding:0}.view{display:none!important}.view.active{display:block}
-  .panel,.stat,.task,.case-step,.flow-card{box-shadow:none;break-inside:avoid}
+  .panel,.stat,.task,.case-step,.flow-card,.flow-builder-section{box-shadow:none;break-inside:avoid}
   body{background:#fff}
 }
 </style>
 
 <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
-
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
   <div class="brand">
-  <div>
-   <img src="pnie_logo.png" alt="" width="88,15" height="80">
-    <span>Discovery workspace · Onboarding</span>
+    <div>
+      <img src="pnie_logo.png" alt="" width="88,15" height="80">
+      <span>Discovery workspace · Onboarding</span>
+    </div>
   </div>
-</div>
   <nav class="nav">
     <button class="active" data-view="overview">Overview</button>
     <button data-view="board">Task board</button>
@@ -144,26 +195,69 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
   <div class="panel"><div class="panel-head"><h2>Timeline de descobertas</h2><span class="muted">conteúdo derivado das tarefas</span></div><div id="caseTimeline"></div></div>
 </section>
 
+<!-- SEÇÃO ATUALIZADA: FLOW & DECISIONS -->
 <section class="view" id="flow">
-  <div class="hero"><div><div class="eyebrow">System view</div><h1>Flow & decisions</h1><div class="subtitle">Mapa visual do raciocínio do projeto. Use como base para apresentações e documentação.</div></div></div>
-  <div class="flow">
-    <div class="flow-card"><div class="flow-title">Investigação</div>
-      <div class="node"><b>Stakeholder alignment</b><small>Objetivos · hipóteses · restrições</small></div><div class="arrow">↓</div>
-      <div class="node"><b>As Is</b><small>Fluxo atual · telas · fricções</small></div><div class="arrow">↓</div>
-      <div class="node"><b>Dados + Benchmark</b><small>Funnel · padrões · referências</small></div>
-    </div>
-    <div class="flow-card"><div class="flow-title">Síntese → ação</div>
-      <div class="node"><b>Insight</b><small>Evidência transformada em aprendizado</small></div><div class="arrow">↓</div>
-      <div class="node"><b>Oportunidade</b><small>Impacto × esforço</small></div><div class="arrow">↓</div>
-      <div class="node"><b>To Be / Wireframe</b><small>Hipóteses de solução</small></div>
+  <div class="hero">
+    <div>
+      <div class="eyebrow">System view & User Flows</div>
+      <h1>Flow & decisions</h1>
+      <div class="subtitle">Arquitetura lógica do projeto, decisões estruturais e mapa do fluxo da aplicação.</div>
     </div>
   </div>
-  <div class="panel" style="margin-top:16px"><div class="panel-head"><h2>Decision log</h2><button class="btn primary" onclick="openTask('decisao')">Registrar decisão</button></div><div id="decisionLog"></div></div>
+
+  <!-- CONSTRUTOR DINÂMICO DE FLUXO DA APLICAÇÃO -->
+  <div class="flow-builder-section">
+    <div class="flow-builder-header">
+      <div>
+        <h2 style="margin:0;font-size:16px;">Fluxo da Aplicação (User Flow)</h2>
+        <span class="muted" style="font-size:12px;">Mapeie telas, decisões e entradas do usuário em formato sequencial.</span>
+      </div>
+      <button class="btn primary" onclick="openFlowNodeModal()">+ Adicionar etapa ao fluxo</button>
+    </div>
+    <div class="flow-container-scroll">
+      <main class="flow-container" id="appFlowContainer">
+        <!-- Renderizado dinamicamente via JS -->
+      </main>
+    </div>
+  </div>
+
+  <!-- RACIOCÍNIO DO PROJETO EM DUAS COLUNAS -->
+  <div class="flow-grid-top">
+    <div class="flow-card">
+      <div class="flow-title">Investigação <span>Fase 01</span></div>
+      <div class="node"><b>Stakeholder alignment</b><small>Objetivos · hipóteses · restrições do negócio</small></div>
+      <div class="arrow">↓</div>
+      <div class="node"><b>As Is</b><small>Fluxo atual · mapeamento de telas · gargalos e fricções</small></div>
+      <div class="arrow">↓</div>
+      <div class="node"><b>Dados + Benchmark</b><small>Análise de Funnel · padrões de mercado · referências</small></div>
+    </div>
+    <div class="flow-card">
+      <div class="flow-title">Síntese & Solução <span>Fase 02</span></div>
+      <div class="node"><b>Insight</b><small>Evidências consolidadas em aprendizados acionáveis</small></div>
+      <div class="arrow">↓</div>
+      <div class="node"><b>Oportunidades</b><small>Matriz de Impacto × Esforço de implementação</small></div>
+      <div class="arrow">↓</div>
+      <div class="node"><b>To Be / Wireframe</b><small>Arquitetura da solução e prototipagem</small></div>
+    </div>
+  </div>
+
+  <!-- LOG DE DECISÕES MELHORADO -->
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 style="margin:0">Decision Log</h2>
+        <span class="muted" style="font-size:12px">Histórico de decisões estratégicas de produto e UX</span>
+      </div>
+      <button class="btn primary" onclick="openTask('decisao')">Registrar decisão</button>
+    </div>
+    <div id="decisionLog"></div>
+  </div>
 </section>
 </div>
 </main>
 </div>
 
+<!-- MODAL DE TAREFAS -->
 <div class="modal" id="modal">
 <div class="dialog">
   <div class="dialog-head"><div><div class="eyebrow">Workspace</div><h2 id="modalTitle" style="margin:5px 0">Nova tarefa</h2></div><button class="close" onclick="closeModal()">×</button></div>
@@ -179,6 +273,39 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
   </form>
 </div>
 </div>
+
+<!-- MODAL NOVO: CRIAR/EDITAR ETAPA DO FLUXO (USER FLOW) -->
+<div class="modal" id="flowNodeModal">
+<div class="dialog">
+  <div class="dialog-head">
+    <div><div class="eyebrow">User Flow</div><h2 id="flowNodeModalTitle" style="margin:5px 0">Nova etapa do fluxo</h2></div>
+    <button class="close" onclick="closeFlowNodeModal()">×</button>
+  </div>
+  <form id="flowNodeForm" onsubmit="saveFlowNode(event)">
+    <div class="form-grid">
+      <div class="field full">
+        <label>Rótulo / Texto da Etapa</label>
+        <input id="fnLabel" required placeholder="Ex.: Tela de Login, Senha Correta?, Digita Código SMS">
+      </div>
+      <div class="field full">
+        <label>Tipo de Elemento (Forma)</label>
+        <select id="fnType">
+          <option value="start">Início / Fim (Pílula/Oval)</option>
+          <option value="process" selected>Tela / Processo (Retângulo)</option>
+          <option value="decision">Decisão (Losango)</option>
+          <option value="input">Entrada de Dados (Paralelogramo)</option>
+          <option value="end">Fim (Pílula/Oval)</option>
+        </select>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" onclick="closeFlowNodeModal()">Cancelar</button>
+      <button class="btn primary">Adicionar ao Fluxo</button>
+    </div>
+  </form>
+</div>
+</div>
+
 <div class="toast" id="toast">Salvo.</div>
 
 <script>
@@ -186,6 +313,7 @@ const TAGS=[
  ['discovery','DISCOVERY'],['asis','AS IS'],['dados','DADOS'],['benchmark','BENCHMARK'],
  ['hipotese','HIPÓTESE'],['insight','INSIGHT'],['wireframe','WIREFRAME'],['decisao','DECISÃO'],['validacao','VALIDAÇÃO']
 ];
+
 const initial=[
  {id:1,title:'Alinhamento com stakeholders',tag:'discovery',status:'done',desc:'Objetivos, expectativas, restrições e hipóteses iniciais.',evidence:'Hipóteses dos stakeholders devem ser tratadas como pontos de investigação.'},
  {id:2,title:'Mapear fluxo atual de onboarding',tag:'asis',status:'done',desc:'Documentar telas, decisões, erros e pontos de abandono.',evidence:'As Is será a base para comparação com referências.'},
@@ -200,19 +328,38 @@ const initial=[
  {id:11,title:'Biometria: contexto e confiança',tag:'hipotese',status:'done',desc:'Investigar como explicar o motivo da validação de identidade.',evidence:'A comunicação de segurança pode reduzir incerteza antes da ação.'},
  {id:12,title:'Decisão: separar etapas críticas',tag:'decisao',status:'done',desc:'Manter etapas de identidade e segurança claramente compreensíveis.',evidence:'Separação ajuda o usuário a entender o que está acontecendo.'}
 ];
-let tasks=JSON.parse(localStorage.getItem('pineDiscoveryTasks')||'null')||initial;
-let editingId=null;
+
+// DADOS INICIAIS DO FLUXO DA APLICAÇÃO (USER FLOW)
+const initialAppFlow = [
+  { id: 1, label: 'Início', type: 'start' },
+  { id: 2, label: 'Tela de Login', type: 'process' },
+  { id: 3, label: 'Senha Correta?', type: 'decision' },
+  { id: 4, label: 'Digita Código SMS', type: 'input' },
+  { id: 5, label: 'Home do App', type: 'end' }
+];
+
+let tasks = JSON.parse(localStorage.getItem('pineDiscoveryTasks')||'null') || initial;
+let appFlow = JSON.parse(localStorage.getItem('pineAppFlow')||'null') || initialAppFlow;
+
+let editingId = null;
+let editingFlowNodeId = null;
 
 function tagLabel(k){return TAGS.find(x=>x[0]===k)?.[1]||k}
 function statusLabel(k){return {backlog:'Backlog',doing:'Em andamento',review:'Review',done:'Concluída'}[k]}
-function save(){localStorage.setItem('pineDiscoveryTasks',JSON.stringify(tasks))}
-function renderAll(){renderBoard();renderOverview();renderCase();renderDecisions();populateFilters()}
+function save(){
+  localStorage.setItem('pineDiscoveryTasks',JSON.stringify(tasks));
+  localStorage.setItem('pineAppFlow',JSON.stringify(appFlow));
+}
+
+function renderAll(){renderBoard();renderOverview();renderCase();renderDecisions();populateFilters();renderAppFlow()}
+
 function populateFilters(){
  const tf=document.getElementById('tagFilter'), old=tf.value;
  tf.innerHTML='<option value="">Todos os temas</option>'+TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
  tf.value=old;
  const ft=document.getElementById('fTag');ft.innerHTML=TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
 }
+
 function renderBoard(){
  const q=(document.getElementById('search')?.value||'').toLowerCase(), filter=document.getElementById('tagFilter')?.value||'';
  const cols=['backlog','doing','review','done'];
@@ -221,7 +368,9 @@ function renderBoard(){
   return `<div class="column"><div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>${arr.map(taskHTML).join('')||'<div class="empty">Nenhuma tarefa</div>'}</div>`
  }).join('');
 }
+
 function taskHTML(t){return `<article class="task" onclick="editTask(${t.id})"><span class="tag ${t.tag}">${tagLabel(t.tag)}</span><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.desc||'')}</p><div class="meta"><span>${statusLabel(t.status)}</span><span>↗ abrir</span></div></article>`}
+
 function renderOverview(){
  const counts={backlog:0,doing:0,review:0,done:0};tasks.forEach(t=>counts[t.status]++);
  ['backlog','doing','review','done'].forEach(s=>document.getElementById('s'+s[0].toUpperCase()+s.slice(1)).textContent=counts[s]);
@@ -233,17 +382,107 @@ function renderOverview(){
   const p=Math.round(done/all*100);return `<div class="bar-row"><span>${l}</span><div class="bar"><i style="width:${p}%"></i></div><b>${p}%</b></div>`
  }).join('');
 }
+
 function renderDecisions(){
- const arr=tasks.filter(t=>t.tag==='decisao').slice().reverse().slice(0,4);
- document.getElementById('decisions').innerHTML=arr.map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
- document.getElementById('decisionLog').innerHTML=tasks.filter(t=>t.tag==='decisao').slice().reverse().map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('');
+ const arr=tasks.filter(t=>t.tag==='decisao').slice().reverse();
+ document.getElementById('decisions').innerHTML=arr.slice(0,4).map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
+ 
+ document.getElementById('decisionLog').innerHTML=arr.map(t=>`
+   <div class="decision-item">
+     <div class="decision-head-row">
+       <span class="decision-title">${escapeHtml(t.title)}</span>
+       <span class="decision-badge">Decisão Registrada</span>
+     </div>
+     <div class="decision-body">${escapeHtml(t.evidence || t.desc || 'Sem detalhes informados.')}</div>
+   </div>
+ `).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
 }
+
 function renderCase(){
  const steps=[['01','Contexto','discovery'],['02','As Is','asis'],['03','Evidências','dados'],['04','Benchmark','benchmark'],['05','Insights','insight'],['06','Oportunidades','hipotese'],['07','To Be','wireframe'],['08','Validação','validacao']];
  document.getElementById('caseLine').innerHTML=steps.map(s=>`<div class="case-step"><strong>${s[0]} · ${s[1]}</strong><span>${tasks.filter(t=>t.tag===s[2]).length} tarefa(s)</span></div>`).join('');
  const ordered=tasks.filter(t=>t.status==='done').slice().reverse();
  document.getElementById('caseTimeline').innerHTML=ordered.map((t,i)=>`<div class="decision"><b>${String(i+1).padStart(2,'0')} · ${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Conclua tarefas para formar a narrativa.</div>';
 }
+
+/* RENDERIZADOR DO FLUXO DA APLICAÇÃO (USER FLOW) */
+function renderAppFlow(){
+  const container = document.getElementById('appFlowContainer');
+  if(!appFlow || appFlow.length === 0){
+    container.innerHTML = '<div class="empty">Nenhum fluxo cadastrado. Clique em "+ Adicionar etapa ao fluxo" para começar.</div>';
+    return;
+  }
+
+  container.innerHTML = appFlow.map((node, index) => {
+    const isLast = index === appFlow.length - 1;
+    let shapeClass = 'node-process';
+    if(node.type === 'start') shapeClass = 'node-start';
+    else if(node.type === 'end') shapeClass = 'node-end';
+    else if(node.type === 'decision') shapeClass = 'node-decision';
+    else if(node.type === 'input') shapeClass = 'node-input';
+
+    return `
+      <div class="flow-node-wrapper">
+        <div class="flow-node ${shapeClass}">
+          <div class="node-actions">
+            <button class="btn sm" onclick="editFlowNode(${node.id})">✏️</button>
+            <button class="btn sm danger" onclick="deleteFlowNode(${node.id})">✕</button>
+          </div>
+          <span class="node-text">${escapeHtml(node.label)}</span>
+        </div>
+        ${!isLast ? '<div class="flow-arrow"></div>' : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+/* ACOES DO FLUXO DE APLICAÇÃO */
+function openFlowNodeModal(){
+  editingFlowNodeId = null;
+  document.getElementById('flowNodeModalTitle').textContent = 'Nova etapa do fluxo';
+  document.getElementById('flowNodeForm').reset();
+  document.getElementById('flowNodeModal').classList.add('show');
+}
+
+function closeFlowNodeModal(){
+  document.getElementById('flowNodeModal').classList.remove('show');
+}
+
+function editFlowNode(id){
+  const node = appFlow.find(n => n.id === id);
+  if(!node) return;
+  editingFlowNodeId = id;
+  document.getElementById('flowNodeModalTitle').textContent = 'Editar etapa do fluxo';
+  document.getElementById('fnLabel').value = node.label;
+  document.getElementById('fnType').value = node.type;
+  document.getElementById('flowNodeModal').classList.add('show');
+}
+
+function deleteFlowNode(id){
+  appFlow = appFlow.filter(n => n.id !== id);
+  save();
+  renderAppFlow();
+  showToast('Etapa removida.');
+}
+
+function saveFlowNode(e){
+  e.preventDefault();
+  const label = document.getElementById('fnLabel').value.trim();
+  const type = document.getElementById('fnType').value;
+
+  if(editingFlowNodeId){
+    const node = appFlow.find(n => n.id === editingFlowNodeId);
+    if(node){ node.label = label; node.type = type; }
+  } else {
+    appFlow.push({ id: Date.now(), label, type });
+  }
+
+  save();
+  closeFlowNodeModal();
+  renderAppFlow();
+  showToast('Fluxo atualizado.');
+}
+
 function openTask(prefill){
  editingId=null;document.getElementById('modalTitle').textContent='Nova tarefa';document.getElementById('taskForm').reset();
  if(prefill)document.getElementById('fTag').value=prefill;
@@ -264,8 +503,11 @@ function saveTask(e){
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',1800)}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.getElementById('crumb').textContent=b.textContent}));
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+document.getElementById('flowNodeModal').addEventListener('click',e=>{if(e.target.id==='flowNodeModal')closeFlowNodeModal()});
+
 populateFilters();renderAll();
 </script>
 </body>
