@@ -1,0 +1,139 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #f4f5f7;
+  color: #172b4d;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+button {
+  background-color: #0052cc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+button:hover {
+  background-color: #0065ff;
+}
+
+.admin-only {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.admin-only input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 300px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.column {
+  background-color: #ebecf0;
+  border-radius: 8px;
+  width: 33%;
+  padding: 15px;
+  min-height: 450px;
+}
+
+.column h2 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: #5e6c84;
+}
+
+.task-list {
+  min-height: 380px;
+}
+
+.task-card {
+  background: white;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  word-break: break-word;
+}
+
+.task-card.readonly {
+  cursor: default;
+}
+
+.btn-delete {
+  background: transparent;
+  border: none;
+  color: #ff4d4f;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.btn-delete:hover {
+  background-color: #fff1f0;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+}
+
+.modal-content input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  color: #5e6c84;
+}
+
+.btn-cancel:hover {
+  background-color: #ebecf0;
+}

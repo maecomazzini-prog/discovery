@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quadro Kanban</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- SDK do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header>
+    <h1>Meu Quadro Kanban</h1>
+    <div id="auth-area">
+      <button id="btn-login-modal" onclick="toggleModal(true)">Login Admin</button>
+      <button id="btn-logout" onclick="logout()" style="display:none;">Sair (Admin)</button>
+    </div>
+  </header>
+
+  <!-- Painel de criação de tarefas (Apenas Admin) -->
+  <div id="admin-controls" class="admin-only" style="display:none;">
+    <input type="text" id="new-task-title" placeholder="Digite uma nova tarefa...">
+    <button onclick="addTask()">Adicionar Tarefa</button>
+  </div>
+
+  <!-- Board Kanban -->
+  <main class="kanban-board">
+    <div class="column" data-status="todo" ondragover="allowDrop(event)" ondrop="drop(event)">
+      <h2>A Fazer</h2>
+      <div class="task-list" id="list-todo"></div>
+    </div>
+    
+    <div class="column" data-status="doing" ondragover="allowDrop(event)" ondrop="drop(event)">
+      <h2>Em Andamento</h2>
+      <div class="task-list" id="list-doing"></div>
+    </div>
+
+    <div class="column" data-status="done" ondragover="allowDrop(event)" ondrop="drop(event)">
+      <h2>Concluído</h2>
+      <div class="task-list" id="list-done"></div>
+    </div>
+  </main>
+
+  <!-- Modal de Login -->
+  <div id="login-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Login do Administrador</h3>
+      <input type="email" id="login-email" placeholder="E-mail">
+      <input type="password" id="login-password" placeholder="Senha">
+      <button onclick="login()">Entrar</button>
+      <button onclick="toggleModal(false)" class="btn-cancel">Cancelar</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
