@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pine Discovery Workspace — Onboarding · V2</title>
+<style>
+:root{
+  --pine:#741b3b;
+  --pine-dark:#54152d;
+  --pine-2:#8d294d;
+  --ink:#262526;
+  --muted:#777477;
+  --line:#e4e0e1;
+  --surface:#f5f3f3;
+  --white:#fff;
+  --gold:#c9a45c;
+  --gold-soft:#efe4cf;
+  --burgundy-soft:#f1e3e8;
+  --orange:#e7b56d;
+  --blue:#b8cfe2;
+  --purple:#d2c2d0;
+  --pink:#e5b7c5;
+  --green-soft:#c9ddd4;
+  --shadow:0 10px 30px rgba(72,25,43,.08);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sidebar{background:var(--pine);color:#fff;padding:24px 18px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px}
+.brand-logo{width:178px;height:auto;display:block}
+.brand span{display:block;color:#cbbbc1;font-size:11px;margin-top:5px}
+.nav{display:grid;gap:5px}
+.nav button{border:0;background:transparent;color:#c9d2cf;text-align:left;padding:11px 12px;border-radius:10px}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.1);color:#fff}
+.sidebar .mini{margin-top:auto;border-top:1px solid rgba(255,255,255,.13);padding:16px 8px;color:#aebeba;font-size:12px}
+.main{min-width:0}
+.topbar{height:72px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}
+.crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--ink)}
+.top-actions{display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 13px;font-weight:650}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}.btn.lime{background:var(--gold);border-color:var(--gold);color:#fff}
+.content{padding:28px 30px 60px;max-width:1500px;margin:auto}
+.view{display:none}.view.active{display:block}
+.hero{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:24px}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--pine-2)}
+h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
+.subtitle{color:var(--muted);max-width:650px}
+.progress-wrap{width:260px}.progress-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}.progress{height:8px;background:#e4e9e7;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--pine);border-radius:99px;width:72%}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:0 2px 8px rgba(0,0,0,.02)}
+.stat .label{color:var(--muted);font-size:12px}.stat strong{display:block;font-size:25px;margin:5px 0}.stat small{color:var(--pine-2);font-weight:700}
+.grid2{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.02)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.panel-head h2{font-size:15px;margin:0}.muted{color:var(--muted)}
+.bar-row{display:grid;grid-template-columns:105px 1fr 35px;gap:10px;align-items:center;margin:13px 0;font-size:12px}.bar{height:8px;background:#ebe6e7;border-radius:99px;overflow:hidden}.bar i{height:100%;display:block;background:var(--pine);border-radius:99px}
+.decision{border-top:1px solid var(--line);padding:13px 0}.decision:first-child{border-top:0;padding-top:0}.decision b{display:block;font-size:13px}.decision span{font-size:12px;color:var(--muted)}
+.board-toolbar{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:18px}.filters{display:flex;gap:8px;flex-wrap:wrap}.filters select,.search{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;color:var(--ink)}
+.kanban{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:14px;overflow-x:auto}
+.column{background:#ece7e8;border-radius:16px;padding:12px;min-height:520px}.col-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:4px 3px}.col-head b{font-size:12px}.count{background:#fff;border-radius:99px;padding:2px 7px;color:var(--muted);font-size:11px}
+.task{background:#fff;border:1px solid #e0e5e2;border-radius:14px;padding:14px;margin:9px 0;box-shadow:0 3px 10px rgba(18,35,31,.05);cursor:pointer}.task:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.tag{display:inline-flex;border-radius:99px;padding:4px 7px;font-size:9px;font-weight:850;letter-spacing:.06em;margin-bottom:10px}.tag.discovery{background:#d8c0ca}.tag.asis{background:#c9d7df}.tag.dados{background:#e8cda9}.tag.benchmark{background:#e2bcc7}.tag.hipotese{background:#d7dfbf}.tag.insight{background:#c7dbd4}.tag.wireframe{background:#d9cfe0}.tag.decisao{background:#ddd9d8}.tag.validacao{background:#ead7ae}
+.task h3{font-size:13px;margin:0 0 7px}.task p{font-size:11px;color:var(--muted);margin:0 0 12px}.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
+.case-line{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;margin:25px 0}.case-step{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 10px;min-height:105px}.case-step:not(:last-child):after{content:"→";position:absolute;right:-12px;top:40px;color:#98a29f;font-weight:800;z-index:2}.case-step strong{font-size:11px;display:block}.case-step span{font-size:10px;color:var(--muted);display:block;margin-top:7px}
+.flow{display:grid;grid-template-columns:1fr 1fr;gap:16px}.flow-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}.flow-title{font-weight:800;margin-bottom:16px}.node{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafbfa;margin:7px 0}.node small{display:block;color:var(--muted);font-size:10px}.arrow{text-align:center;color:var(--pine-2);font-weight:800}
+.modal{position:fixed;inset:0;background:rgba(8,24,21,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modal.show{display:flex}.dialog{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.25)}.dialog-head{display:flex;justify-content:space-between;gap:20px}.close{border:0;background:#edf1ef;border-radius:10px;width:34px;height:34px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;font-weight:800}.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfcfb}.field textarea{min-height:100px;resize:vertical}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.empty{padding:35px;text-align:center;color:var(--muted)}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--pine);color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:50;box-shadow:var(--shadow)}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.flow{grid-template-columns:1fr}.case-line{grid-template-columns:repeat(4,1fr)}.case-step:not(:last-child):after{display:none}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:12px;display:block}.brand{margin-bottom:10px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.sidebar .mini{display:none}.topbar{padding:0 16px}.content{padding:20px 15px 50px}.hero{display:block}.progress-wrap{width:100%;margin-top:20px}.cards{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:repeat(4,280px)}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+@media print{
+  .sidebar,.topbar,.top-actions,.board-toolbar,.btn,.filters,.modal,.toast{display:none!important}
+  .app{display:block}.content{padding:0}.view{display:none!important}.view.active{display:block}
+  .panel,.stat,.task,.case-step,.flow-card{box-shadow:none;break-inside:avoid}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+  <div>
+    <svg class="brand-logo" viewBox="0 0 400 108" role="img" aria-label="Banco Pine">
+      <g fill="#ffffff">
+        <rect x="2" y="2" width="104" height="104" rx="22"/>
+        <path d="M17 77 L39 57 L39 69 L54 55 L54 67 L72 50 L72 64 L91 47 L91 82 L72 67 L72 83 L54 69 L54 86 L39 73 L39 90 L17 77Z" fill="#741b3b"/>
+      </g>
+      <text x="126" y="38" fill="#ffffff" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="300" letter-spacing="1">BANCO</text>
+      <text x="124" y="88" fill="#ffffff" font-size="58" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="-2">PINE</text>
+    </svg>
+    <span>Discovery workspace · Onboarding</span>
+  </div>
+</div>
+  <nav class="nav">
+    <button class="active" data-view="overview">Overview</button>
+    <button data-view="board">Task board</button>
+    <button data-view="case">Case view</button>
+    <button data-view="flow">Flow & decisions</button>
+  </nav>
+  <div class="mini"><span style="color:#c9a45c;font-weight:800">PROJECT</span><br><strong style="color:#fff">Digital Onboarding</strong><br><br>v0.2 · Pine visual system</div>
+</aside>
+
+<main class="main">
+<header class="topbar">
+  <div class="crumb"><b>Pine Discovery</b> / <span id="crumb">Overview</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.print()">Export / PDF</button>
+    <button class="btn primary" onclick="openTask()">+ Nova tarefa</button>
+  </div>
+</header>
+
+<div class="content">
+<section class="view active" id="overview">
+  <div class="hero">
+    <div><div class="eyebrow">Discovery · Product Design</div><h1>Onboarding Workspace</h1><div class="subtitle">Painel de trabalho para organizar investigação, hipóteses, decisões e evolução do discovery.</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--pine);font-weight:750">Pine-inspired visual system · vinho, neutros e acentos dourados</div></div>
+    <div class="progress-wrap"><div class="progress-head"><span>Discovery progress</span><b id="progressText">72%</b></div><div class="progress"><i id="progressBar"></i></div></div>
+  </div>
+  <div class="cards">
+    <div class="stat"><div class="label">Backlog</div><strong id="sBacklog">0</strong><small>tarefas</small></div>
+    <div class="stat"><div class="label">Em andamento</div><strong id="sDoing">0</strong><small>tarefas</small></div>
+    <div class="stat"><div class="label">Review</div><strong id="sReview">0</strong><small>tarefas</small></div>
+    <div class="stat"><div class="label">Concluídas</div><strong id="sDone">0</strong><small>tarefas</small></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-head"><h2>Progresso por tema</h2><span class="muted">auto</span></div><div id="themeProgress"></div></div>
+    <div class="panel"><div class="panel-head"><h2>Últimas decisões</h2><button class="btn" onclick="openTask('decisao')">+ decisão</button></div><div id="decisions"></div></div>
+  </div>
+</section>
+
+<section class="view" id="board">
+  <div class="hero"><div><div class="eyebrow">Work in progress</div><h1>Task board</h1><div class="subtitle">Crie tarefas, registre evidências e acompanhe o avanço do discovery.</div></div></div>
+  <div class="board-toolbar">
+    <div class="filters"><input class="search" id="search" placeholder="Buscar tarefa..." oninput="renderBoard()"><select id="tagFilter" onchange="renderBoard()"><option value="">Todos os temas</option></select></div>
+    <button class="btn primary" onclick="openTask()">+ Nova tarefa</button>
+  </div>
+  <div class="kanban" id="kanban"></div>
+</section>
+
+<section class="view" id="case">
+  <div class="hero"><div><div class="eyebrow">Portfolio-ready narrative</div><h1>Case view</h1><div class="subtitle">A mesma base de tarefas organizada como uma história de Design: contexto → evidência → decisão → solução.</div></div></div>
+  <div class="case-line" id="caseLine"></div>
+  <div class="panel"><div class="panel-head"><h2>Timeline de descobertas</h2><span class="muted">conteúdo derivado das tarefas</span></div><div id="caseTimeline"></div></div>
+</section>
+
+<section class="view" id="flow">
+  <div class="hero"><div><div class="eyebrow">System view</div><h1>Flow & decisions</h1><div class="subtitle">Mapa visual do raciocínio do projeto. Use como base para apresentações e documentação.</div></div></div>
+  <div class="flow">
+    <div class="flow-card"><div class="flow-title">Investigação</div>
+      <div class="node"><b>Stakeholder alignment</b><small>Objetivos · hipóteses · restrições</small></div><div class="arrow">↓</div>
+      <div class="node"><b>As Is</b><small>Fluxo atual · telas · fricções</small></div><div class="arrow">↓</div>
+      <div class="node"><b>Dados + Benchmark</b><small>Funnel · padrões · referências</small></div>
+    </div>
+    <div class="flow-card"><div class="flow-title">Síntese → ação</div>
+      <div class="node"><b>Insight</b><small>Evidência transformada em aprendizado</small></div><div class="arrow">↓</div>
+      <div class="node"><b>Oportunidade</b><small>Impacto × esforço</small></div><div class="arrow">↓</div>
+      <div class="node"><b>To Be / Wireframe</b><small>Hipóteses de solução</small></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px"><div class="panel-head"><h2>Decision log</h2><button class="btn primary" onclick="openTask('decisao')">Registrar decisão</button></div><div id="decisionLog"></div></div>
+</section>
+</div>
+</main>
+</div>
+
+<div class="modal" id="modal">
+<div class="dialog">
+  <div class="dialog-head"><div><div class="eyebrow">Workspace</div><h2 id="modalTitle" style="margin:5px 0">Nova tarefa</h2></div><button class="close" onclick="closeModal()">×</button></div>
+  <form id="taskForm" onsubmit="saveTask(event)">
+    <div class="form-grid">
+      <div class="field full"><label>Título</label><input id="fTitle" required placeholder="Ex.: Mapear fluxo de biometria"></div>
+      <div class="field"><label>Tema</label><select id="fTag"></select></div>
+      <div class="field"><label>Status</label><select id="fStatus"><option value="backlog">Backlog</option><option value="doing">Em andamento</option><option value="review">Review</option><option value="done">Concluída</option></select></div>
+      <div class="field full"><label>Descrição</label><textarea id="fDesc" placeholder="Objetivo, contexto ou problema..."></textarea></div>
+      <div class="field full"><label>Hipótese / evidência / decisão</label><textarea id="fEvidence" placeholder="Registre o raciocínio para que isso possa virar documentação depois."></textarea></div>
+    </div>
+    <div class="dialog-actions"><button type="button" class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary">Salvar tarefa</button></div>
+  </form>
+</div>
+</div>
+<div class="toast" id="toast">Salvo.</div>
+
+<script>
+const TAGS=[
+ ['discovery','DISCOVERY'],['asis','AS IS'],['dados','DADOS'],['benchmark','BENCHMARK'],
+ ['hipotese','HIPÓTESE'],['insight','INSIGHT'],['wireframe','WIREFRAME'],['decisao','DECISÃO'],['validacao','VALIDAÇÃO']
+];
+const initial=[
+ {id:1,title:'Alinhamento com stakeholders',tag:'discovery',status:'done',desc:'Objetivos, expectativas, restrições e hipóteses iniciais.',evidence:'Hipóteses dos stakeholders devem ser tratadas como pontos de investigação.'},
+ {id:2,title:'Mapear fluxo atual de onboarding',tag:'asis',status:'done',desc:'Documentar telas, decisões, erros e pontos de abandono.',evidence:'As Is será a base para comparação com referências.'},
+ {id:3,title:'Levantar dados disponíveis do funnel',tag:'dados',status:'doing',desc:'Identificar eventos, conversão e abandono por etapa.',evidence:'A análise quantitativa deve confirmar ou refutar hipóteses.'},
+ {id:4,title:'Benchmark C6 — fluxo completo',tag:'benchmark',status:'doing',desc:'Mapear sequência, padrões e decisões da experiência de referência.',evidence:'Observar princípios de experiência, não apenas aparência visual.'},
+ {id:5,title:'Benchmark de outros players',tag:'benchmark',status:'review',desc:'Comparar padrões de onboarding e KYC em outros bancos/fintechs.',evidence:'Separar padrões de mercado de decisões específicas do C6.'},
+ {id:6,title:'Hipótese: reduzir esforço percebido',tag:'hipotese',status:'doing',desc:'Investigar se agrupamento e progressão podem reduzir carga cognitiva.',evidence:'Testar contra quantidade de campos e abandono por etapa.'},
+ {id:7,title:'Mapa de oportunidades',tag:'insight',status:'backlog',desc:'Consolidar evidências em oportunidades priorizadas.',evidence:''},
+ {id:8,title:'Fluxo To Be',tag:'wireframe',status:'backlog',desc:'Desenhar arquitetura futura do onboarding.',evidence:''},
+ {id:9,title:'Registrar princípios de design',tag:'decisao',status:'backlog',desc:'Documentar critérios que orientarão a solução.',evidence:''},
+ {id:10,title:'Plano de validação',tag:'validacao',status:'backlog',desc:'Definir como validar as principais hipóteses.',evidence:''},
+ {id:11,title:'Biometria: contexto e confiança',tag:'hipotese',status:'done',desc:'Investigar como explicar o motivo da validação de identidade.',evidence:'A comunicação de segurança pode reduzir incerteza antes da ação.'},
+ {id:12,title:'Decisão: separar etapas críticas',tag:'decisao',status:'done',desc:'Manter etapas de identidade e segurança claramente compreensíveis.',evidence:'Separação ajuda o usuário a entender o que está acontecendo.'}
+];
+let tasks=JSON.parse(localStorage.getItem('pineDiscoveryTasks')||'null')||initial;
+let editingId=null;
+
+function tagLabel(k){return TAGS.find(x=>x[0]===k)?.[1]||k}
+function statusLabel(k){return {backlog:'Backlog',doing:'Em andamento',review:'Review',done:'Concluída'}[k]}
+function save(){localStorage.setItem('pineDiscoveryTasks',JSON.stringify(tasks))}
+function renderAll(){renderBoard();renderOverview();renderCase();renderDecisions();populateFilters()}
+function populateFilters(){
+ const tf=document.getElementById('tagFilter'), old=tf.value;
+ tf.innerHTML='<option value="">Todos os temas</option>'+TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
+ tf.value=old;
+ const ft=document.getElementById('fTag');ft.innerHTML=TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
+}
+function renderBoard(){
+ const q=(document.getElementById('search')?.value||'').toLowerCase(), filter=document.getElementById('tagFilter')?.value||'';
+ const cols=['backlog','doing','review','done'];
+ document.getElementById('kanban').innerHTML=cols.map(s=>{
+  const arr=tasks.filter(t=>t.status===s && (!filter||t.tag===filter) && (!q||(`${t.title} ${t.desc} ${t.evidence}`).toLowerCase().includes(q)));
+  return `<div class="column"><div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>${arr.map(taskHTML).join('')||'<div class="empty">Nenhuma tarefa</div>'}</div>`
+ }).join('');
+}
+function taskHTML(t){return `<article class="task" onclick="editTask(${t.id})"><span class="tag ${t.tag}">${tagLabel(t.tag)}</span><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.desc||'')}</p><div class="meta"><span>${statusLabel(t.status)}</span><span>↗ abrir</span></div></article>`}
+function renderOverview(){
+ const counts={backlog:0,doing:0,review:0,done:0};tasks.forEach(t=>counts[t.status]++);
+ ['backlog','doing','review','done'].forEach(s=>document.getElementById('s'+s[0].toUpperCase()+s.slice(1)).textContent=counts[s]);
+ const pct=Math.round((counts.done + counts.review*.65 + counts.doing*.3)/Math.max(tasks.length,1)*100);
+ document.getElementById('progressText').textContent=pct+'%';document.getElementById('progressBar').style.width=pct+'%';
+ document.getElementById('themeProgress').innerHTML=TAGS.map(([k,l])=>{
+  const all=tasks.filter(t=>t.tag===k).length, done=tasks.filter(t=>t.tag===k&&t.status==='done').length;
+  if(!all)return '';
+  const p=Math.round(done/all*100);return `<div class="bar-row"><span>${l}</span><div class="bar"><i style="width:${p}%"></i></div><b>${p}%</b></div>`
+ }).join('');
+}
+function renderDecisions(){
+ const arr=tasks.filter(t=>t.tag==='decisao').slice().reverse().slice(0,4);
+ document.getElementById('decisions').innerHTML=arr.map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
+ document.getElementById('decisionLog').innerHTML=tasks.filter(t=>t.tag==='decisao').slice().reverse().map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('');
+}
+function renderCase(){
+ const steps=[['01','Contexto','discovery'],['02','As Is','asis'],['03','Evidências','dados'],['04','Benchmark','benchmark'],['05','Insights','insight'],['06','Oportunidades','hipotese'],['07','To Be','wireframe'],['08','Validação','validacao']];
+ document.getElementById('caseLine').innerHTML=steps.map(s=>`<div class="case-step"><strong>${s[0]} · ${s[1]}</strong><span>${tasks.filter(t=>t.tag===s[2]).length} tarefa(s)</span></div>`).join('');
+ const ordered=tasks.filter(t=>t.status==='done').slice().reverse();
+ document.getElementById('caseTimeline').innerHTML=ordered.map((t,i)=>`<div class="decision"><b>${String(i+1).padStart(2,'0')} · ${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Conclua tarefas para formar a narrativa.</div>';
+}
+function openTask(prefill){
+ editingId=null;document.getElementById('modalTitle').textContent='Nova tarefa';document.getElementById('taskForm').reset();
+ if(prefill)document.getElementById('fTag').value=prefill;
+ document.getElementById('modal').classList.add('show');
+}
+function editTask(id){
+ const t=tasks.find(x=>x.id===id);if(!t)return;editingId=id;
+ document.getElementById('modalTitle').textContent='Editar tarefa';
+ document.getElementById('fTitle').value=t.title;document.getElementById('fTag').value=t.tag;document.getElementById('fStatus').value=t.status;document.getElementById('fDesc').value=t.desc||'';document.getElementById('fEvidence').value=t.evidence||'';
+ document.getElementById('modal').classList.add('show');
+}
+function saveTask(e){
+ e.preventDefault();
+ const data={title:fTitle.value.trim(),tag:fTag.value,status:fStatus.value,desc:fDesc.value.trim(),evidence:fEvidence.value.trim()};
+ if(editingId)Object.assign(tasks.find(t=>t.id===editingId),data);else tasks.push({id:Date.now(),...data});
+ save();closeModal();renderAll();showToast('Tarefa salva.');
+}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',1800)}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.getElementById('crumb').textContent=b.textContent}));
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+populateFilters();renderAll();
+</script>
+</body>
+</html>
