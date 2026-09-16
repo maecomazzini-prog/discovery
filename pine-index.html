@@ -802,8 +802,14 @@ async function moveNode(id, direction){
 }
 
 async function syncFlowToSupabase() {
-  await _supabase.from('flow_nodes').delete().neq('id', 0);
-  await _supabase.from('flow_nodes').insert(appFlow);
+  try {
+    // Atualiza linha por linha em vez de tentar deletar o banco todo
+    for (const node of appFlow) {
+      await _supabase.from('flow_nodes').upsert(node);
+    }
+  } catch (err) {
+    console.error('Erro ao sincronizar fluxo:', err);
+  }
 }
 
 async function addNodeRelative(relativeId, position){
