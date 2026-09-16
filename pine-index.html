@@ -927,24 +927,37 @@ function editTask(id){
  document.getElementById('modal').classList.add('show');
 }
 
-async function saveTask(e){
- e.preventDefault();
- const data={title:fTitle.value.trim(),tag:fTag.value,status:fStatus.value,desc:fDesc.value.trim(),evidence:fEvidence.value.trim()};
- 
- if(editingId){
-   Object.assign(tasks.find(t=>t.id===editingId),data);
-   await _supabase.from('tasks').update(data).eq('id', editingId);
- } else {
-   const newTask = {id:Date.now(), ...data};
-   tasks.push(newTask);
-   await _supabase.from('tasks').insert([newTask]);
- }
- 
- closeModal();
- renderAll();
- showToast('Tarefa salva.');
-}
+async function saveTask(e) {
+  e.preventDefault();
+  
+  const data = {
+    title: document.getElementById('fTitle').value.trim(),
+    tag: document.getElementById('fTag').value,
+    status: document.getElementById('fStatus').value,
+    desc: document.getElementById('fDesc').value.trim(),
+    evidence: document.getElementById('fEvidence').value.trim()
+  };
 
+  try {
+    if (editingId) {
+      const { error } = await _supabase.from('tasks').update(data).eq('id', editingId);
+      if (error) throw error;
+      Object.assign(tasks.find(t => t.id === editingId), data);
+    } else {
+      // O Supabase gera o ID automaticamente
+      const { data: inserted, error } = await _supabase.from('tasks').insert([data]).select();
+      if (error) throw error;
+      if (inserted && inserted[0]) tasks.push(inserted[0]);
+    }
+
+    closeModal();
+    renderAll();
+    showToast('Tarefa salva com sucesso!');
+  } catch (err) {
+    console.error('Erro ao salvar no Supabase:', err);
+    alert('Erro ao gravar: ' + (err.message || 'Verifique as permissões de RLS'));
+  }
+}
 async function deleteTask(){
  if(!editingId) return;
  if(!confirm("Deseja realmente excluir esta tarefa?")) return;
