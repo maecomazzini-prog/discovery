@@ -119,7 +119,7 @@ function renderBoard() {
   if(!kanban) return;
 
   kanban.innerHTML = cols.map(s => {
-    const arr = tasks.filter(t => t.status === s && (!filter || t.tag === filter) && (!q || (`${t.title} ${t.desc} ${t.evidence}`).toLowerCase().includes(q)));
+    const arr = tasks.filter(t => t.status === s && (!filter || t.tag === filter) && (!q || (`${t.title} ${t.description} ${t.evidence}`).toLowerCase().includes(q)));
     return `
       <div class="column" data-status="${s}">
         <div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>
@@ -127,7 +127,7 @@ function renderBoard() {
           <article class="task" ${IS_EDIT_MODE ? 'draggable="true"' : ''} data-task-id="${t.id}">
             <span class="tag ${t.tag}">${tagLabel(t.tag)}</span>
             <h3 style="margin:4px 0 6px;font-size:14px;color:var(--ink);">${escapeHtml(t.title)}</h3>
-            <p style="margin:0;font-size:12px;color:var(--muted);">${escapeHtml(t.desc||'')}</p>
+            <p style="margin:0;font-size:12px;color:var(--muted);">${escapeHtml(t.description||'')}</p>
             <div class="meta">
               <span>${statusLabel(t.status)}</span>
               ${IS_EDIT_MODE ? `<button class="btn sm" onclick="editTask(${t.id}); event.stopPropagation();">✏️ Editar</button>` : ''}
@@ -231,7 +231,7 @@ function renderDecisions() {
           <span class="decision-title">${escapeHtml(t.title)}</span>
           <span class="decision-badge">Decisão</span>
         </div>
-        <div class="decision-body">${escapeHtml(t.evidence || t.desc || '')}</div>
+        <div class="decision-body">${escapeHtml(t.evidence || t.description || '')}</div>
       </div>`).join('') || '<div class="empty">Nenhuma decisão registrada.</div>';
   }
 }
@@ -252,7 +252,7 @@ function renderCase() {
         <div>
           <div class="case-card-header"><span class="tag ${item.tag}">${tagLabel(item.tag)}</span></div>
           <h3 class="case-card-title">${escapeHtml(item.title)}</h3>
-          <div class="case-card-desc">${escapeHtml(item.desc || '')}</div>
+          <div class="case-card-description">${escapeHtml(item.description || '')}</div>
           ${item.evidence ? `<div class="case-card-evidence"><strong>Evidência:</strong> ${escapeHtml(item.evidence)}</div>` : ''}
         </div>
       </div>
@@ -271,7 +271,7 @@ async function saveTask(e) {
     title: document.getElementById('fTitle').value.trim(),
     tag: document.getElementById('fTag').value,
     status: document.getElementById('fStatus').value,
-    desc: document.getElementById('fDesc').value.trim(),
+    description: document.getElementById('fDescription').value.trim(),
     evidence: document.getElementById('fEvidence').value.trim()
   };
 
@@ -332,7 +332,7 @@ function editTask(id) {
   document.getElementById('fTitle').value = t.title;
   document.getElementById('fTag').value = t.tag;
   document.getElementById('fStatus').value = t.status;
-  document.getElementById('fDesc').value = t.desc || '';
+  document.getElementById('fDescription').value = t.description || '';
   document.getElementById('fEvidence').value = t.evidence || '';
   document.getElementById('modal').classList.add('show');
 }
