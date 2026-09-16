@@ -803,12 +803,19 @@ async function moveNode(id, direction){
 
 async function syncFlowToSupabase() {
   try {
-    // Atualiza linha por linha em vez de tentar deletar o banco todo
     for (const node of appFlow) {
-      await _supabase.from('flow_nodes').upsert(node);
+      // Prepara o objeto removendo IDs temporários numéricos do cliente se for inserção
+      const payload = { ...node };
+      if (typeof payload.id === 'number' && payload.id > 2147483647) {
+        delete payload.id; // Deixa o Supabase gerar o ID correto
+      }
+
+      const { error } = await _supabase.from('flow_nodes').upsert(payload);
+      if (error) throw error;
     }
   } catch (err) {
     console.error('Erro ao sincronizar fluxo:', err);
+    alert('Erro ao sincronizar fluxo: ' + err.message);
   }
 }
 
@@ -883,27 +890,35 @@ async function saveFlowNode(e){
   const actionLabel = document.getElementById('fnActionLabel').value.trim();
   const errorLabel = document.getElementById('fnErrorLabel').value.trim();
 
-  if(editingFlowNodeId){
-    const node = appFlow.find(n => n.id === editingFlowNodeId);
-    if(node){ 
-      node.label = label; 
-      node.type = type; 
-      node.laneId = laneId;
-      node.actionLabel = actionLabel;
-      node.errorLabel = errorLabel;
+  try {
+    if(editingFlowNodeId){
+      const node = appFlow.find(n => n.id === editingFlowNodeId);
+      if(node){ 
+        node.label = label; 
+        node.type = type; 
+        node.laneId = laneId;
+        node.actionLabel = actionLabel;
+        node.errorLabel = errorLabel;
 
-      await _supabase.from('flow_nodes').update({ label, type, laneId, actionLabel, errorLabel }).eq('id', editingFlowNodeId);
+        const { error } = await _supabase.from('flow_nodes').update({ label, type, laneId, actionLabel, errorLabel }).eq('id', editingFlowNodeId);
+        if (error) throw error;
+      }
+    } else {
+      const dataNode = { laneId, label, type, actionLabel, errorLabel };
+      const { data: inserted, error } = await _supabase.from('flow_nodes').insert([dataNode]).select();
+      if (error) throw error;
+      if (inserted && inserted[0]) appFlow.push(inserted[0]);
     }
-  } else {
-    const newNode = { id: Date.now(), laneId, label, type, actionLabel, errorLabel };
-    appFlow.push(newNode);
-    await _supabase.from('flow_nodes').insert([newNode]);
-  }
 
-  closeFlowNodeModal();
-  renderAppFlow();
-  showToast('Fluxo atualizado.');
+    closeFlowNodeModal();
+    renderAppFlow();
+    showToast('Fluxo atualizado com sucesso!');
+  } catch (err) {
+    console.error('Erro no Supabase:', err);
+    alert('Erro ao gravar no fluxo: ' + err.message);
+  }
 }
+
 
 /* OUTROS MODAIS E TAREFAS */
 function openTask(prefill){
@@ -944,7 +959,7 @@ async function saveTask(e) {
       if (error) throw error;
       Object.assign(tasks.find(t => t.id === editingId), data);
     } else {
-      // O Supabase gera o ID automaticamente
+      // Recebe o item recém criado direto do Supabase com seu ID oficial
       const { data: inserted, error } = await _supabase.from('tasks').insert([data]).select();
       if (error) throw error;
       if (inserted && inserted[0]) tasks.push(inserted[0]);
@@ -954,10 +969,11 @@ async function saveTask(e) {
     renderAll();
     showToast('Tarefa salva com sucesso!');
   } catch (err) {
-    console.error('Erro ao salvar no Supabase:', err);
-    alert('Erro ao gravar: ' + (err.message || 'Verifique as permissões de RLS'));
+    console.error('Erro no Supabase:', err);
+    alert('Erro ao gravar tarefa: ' + (err.message || 'Verifique o schema no Supabase'));
   }
 }
+
 async function deleteTask(){
  if(!editingId) return;
  if(!confirm("Deseja realmente excluir esta tarefa?")) return;
