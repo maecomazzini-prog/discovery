@@ -87,7 +87,7 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 .case-step-title{font-size:15px;font-weight:750;color:var(--ink);margin-bottom:12px}
 .case-step-count{font-size:12px;color:var(--muted);background:var(--surface);padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;width:fit-content;font-weight:600}
 
-/* FLOW & DECISIONS MULTIDIRECIONAL COM DRAG & DROP & MULTI-LINHAS */
+/* FLOW & DECISIONS MULTIDIRECIONAL */
 .flow-builder-section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.02)}
 .flow-builder-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .flow-lanes-wrapper{display:flex;flex-direction:column;gap:150px;background:#faf8f8;border:1px solid var(--line);border-radius:14px;padding:30px 20px;overflow-x:auto;min-height:500px}
@@ -172,7 +172,6 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 @media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:12px;display:block}.brand{margin-bottom:10px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.sidebar .mini{display:none}.topbar{padding:0 16px}.content{padding:20px 15px 50px}.hero{display:block}.progress-wrap{width:100%;margin-top:20px}.cards{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:repeat(4,280px)}.case-line{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 </style>
 <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
-<!-- SDK do Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -405,15 +404,18 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 <div class="toast" id="toast">Salvo.</div>
 
 <script>
-// CONFIGURAÇÃO DO SUPABASE
+// 1. CONFIGURAÇÃO E CREDENCIAIS
 const SUPABASE_URL = 'https://spmowzpuinfojtfpxkab.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbW93enB1aW5mb2p0ZnB4a2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODU3NTIsImV4cCI6MjEwNTA2MTc1Mn0.vy8rthkYjluGtD2C2Vj8u-iCBRi6gckVhUM8HDrJHQE';
-
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const TAGS=[
- ['discovery','DISCOVERY'],['asis','AS IS'],['dados','DADOS'],['benchmark','BENCHMARK'],
- ['hipotese','HIPÓTESE'],['insight','INSIGHT'],['wireframe','WIREFRAME'],['decisao','DECISÃO'],['validacao','VALIDAÇÃO']
+// Modo de edição desativado por padrão para convidados, ativado com ?admin=true na URL
+const urlParams = new URLSearchParams(window.location.search);
+const IS_EDIT_MODE = urlParams.get('admin') === 'true';
+
+const TAGS = [
+  ['discovery','DISCOVERY'],['asis','AS IS'],['dados','DADOS'],['benchmark','BENCHMARK'],
+  ['hipotese','HIPÓTESE'],['insight','INSIGHT'],['wireframe','WIREFRAME'],['decisao','DECISÃO'],['validacao','VALIDAÇÃO']
 ];
 
 const initialTasks=[
@@ -443,19 +445,20 @@ let appFlow = [];
 
 let editingId = null;
 let editingFlowNodeId = null;
-let draggedNodeId = null;
 let draggedTaskId = null;
+let draggedNodeId = null;
 
-function tagLabel(k){return TAGS.find(x=>x[0]===k)?.[1]||k}
-function statusLabel(k){return {backlog:'Backlog',doing:'Em andamento',review:'Review',done:'Concluída'}[k]}
+function tagLabel(k){ return TAGS.find(x=>x[0]===k)?.[1]||k; }
+function statusLabel(k){ return {backlog:'Backlog',doing:'Em andamento',review:'Review',done:'Concluída'}[k]; }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 
-// CARREGAMENTO DE DADOS DO SUPABASE
-async function loadDataFromSupabase() {
+// CARREGAR DADOS
+async function initApp() {
   showToast('Carregando dados...');
   try {
-    const { data: dbTasks, error: errTasks } = await _supabase.from('tasks').select('*').order('created_at', { ascending: true });
-    if (errTasks) throw errTasks;
-
+    const { data: dbTasks, error: e1 } = await _supabase.from('tasks').select('*').order('created_at', { ascending: true });
+    if (e1) throw e1;
+    
     if (!dbTasks || dbTasks.length === 0) {
       await _supabase.from('tasks').insert(initialTasks);
       tasks = [...initialTasks];
@@ -463,8 +466,8 @@ async function loadDataFromSupabase() {
       tasks = dbTasks;
     }
 
-    const { data: dbFlow, error: errFlow } = await _supabase.from('flow_nodes').select('*').order('created_at', { ascending: true });
-    if (errFlow) throw errFlow;
+    const { data: dbFlow, error: e2 } = await _supabase.from('flow_nodes').select('*').order('created_at', { ascending: true });
+    if (e2) throw e2;
 
     if (!dbFlow || dbFlow.length === 0) {
       await _supabase.from('flow_nodes').insert(initialAppFlow);
@@ -473,220 +476,165 @@ async function loadDataFromSupabase() {
       appFlow = dbFlow;
     }
 
+    populateFilters();
     renderAll();
+    applyPermissionsUI();
     showToast('Dados sincronizados!');
   } catch (err) {
-    console.error('Erro ao conectar com o Supabase:', err);
-    alert('Erro ao carregar dados do Supabase. Verifique o console.');
+    console.error('Erro ao conectar com Supabase:', err);
+    showToast('Erro ao carregar dados do Supabase');
   }
 }
 
-function renderAll(){renderBoard();renderOverview();renderCase();renderDecisions();populateFilters();renderAppFlow()}
-
-function populateFilters(){
- const tf=document.getElementById('tagFilter'), old=tf.value;
- tf.innerHTML='<option value="">Todos os temas</option>'+TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
- tf.value=old;
- const ft=document.getElementById('fTag');ft.innerHTML=TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
- const cit=document.getElementById('ciTag');cit.innerHTML=TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
+function applyPermissionsUI() {
+  if (!IS_EDIT_MODE) {
+    document.querySelectorAll('.top-actions .primary, .flow-builder-header button, #case .hero button, .node-actions, .flow-node-quick-add, .panel-head button').forEach(el => {
+      if(el) el.style.display = 'none';
+    });
+  }
 }
 
-/* RENDERIZADOR DO TASK BOARD E EVENTOS DE DRAG & DROP DE TAREFAS */
-function renderBoard(){
- const q=(document.getElementById('search')?.value||'').toLowerCase(), filter=document.getElementById('tagFilter')?.value||'';
- const cols=['backlog','doing','review','done'];
- document.getElementById('kanban').innerHTML=cols.map(s=>{
-  const arr=tasks.filter(t=>t.status===s && (!filter||t.tag===filter) && (!q||(`${t.title} ${t.desc} ${t.evidence}`).toLowerCase().includes(q)));
-  return `
-    <div class="column" data-status="${s}">
-      <div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>
-      ${arr.map(taskHTML).join('')||'<div class="empty">Nenhuma tarefa</div>'}
-    </div>`
- }).join('');
- setupTaskDragAndDrop();
+function renderAll() {
+  renderOverview();
+  renderBoard();
+  renderAppFlow();
+  renderDecisions();
+  renderCase();
 }
 
-function taskHTML(t){
-  return `
-    <article class="task" draggable="true" data-task-id="${t.id}">
-      <span class="tag ${t.tag}">${tagLabel(t.tag)}</span>
-      <h3 style="margin:4px 0 6px;font-size:14px;color:var(--ink);">${escapeHtml(t.title)}</h3>
-      <p style="margin:0;font-size:12px;color:var(--muted);">${escapeHtml(t.desc||'')}</p>
-      <div class="meta">
-        <span>${statusLabel(t.status)}</span>
-        <button class="btn sm" onclick="editTask(${t.id}); event.stopPropagation();">✏️ Editar</button>
-      </div>
-    </article>
-  `;
+function populateFilters() {
+  const tf = document.getElementById('tagFilter');
+  if(tf) {
+    const old = tf.value;
+    tf.innerHTML = '<option value="">Todos os temas</option>' + TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
+    tf.value = old;
+  }
+  const ft = document.getElementById('fTag');
+  if(ft) ft.innerHTML = TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
+  const cit = document.getElementById('ciTag');
+  if(cit) cit.innerHTML = TAGS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
 }
 
-function setupTaskDragAndDrop(){
-  const taskCards = document.querySelectorAll('.task');
-  const columns = document.querySelectorAll('.column');
+// OVERVIEW
+function renderOverview() {
+  const counts = {backlog:0, doing:0, review:0, done:0};
+  tasks.forEach(t => { if(counts[t.status] !== undefined) counts[t.status]++; });
+  
+  ['backlog','doing','review','done'].forEach(s => {
+    const el = document.getElementById('s' + s[0].toUpperCase() + s.slice(1));
+    if(el) el.textContent = counts[s];
+  });
 
-  taskCards.forEach(card => {
+  const pct = Math.round((counts.done + counts.review*.65 + counts.doing*.3) / Math.max(tasks.length,1) * 100);
+  const pText = document.getElementById('progressText');
+  const pBar = document.getElementById('progressBar');
+  if(pText) pText.textContent = pct + '%';
+  if(pBar) pBar.style.width = pct + '%';
+
+  const themeEl = document.getElementById('themeProgress');
+  if(themeEl) {
+    themeEl.innerHTML = TAGS.map(([k,l]) => {
+      const all = tasks.filter(t=>t.tag===k).length;
+      const done = tasks.filter(t=>t.tag===k && t.status==='done').length;
+      if(!all) return '';
+      const p = Math.round(done/all*100);
+      return `<div class="bar-row"><span>${l}</span><div class="bar"><i style="width:${p}%"></i></div><b>${p}%</b></div>`;
+    }).join('');
+  }
+}
+
+// BOARD / KANBAN
+function renderBoard() {
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  const filter = document.getElementById('tagFilter')?.value||'';
+  const cols = ['backlog','doing','review','done'];
+  const kanban = document.getElementById('kanban');
+
+  if(!kanban) return;
+
+  kanban.innerHTML = cols.map(s => {
+    const arr = tasks.filter(t => t.status === s && (!filter || t.tag === filter) && (!q || (`${t.title} ${t.desc} ${t.evidence}`).toLowerCase().includes(q)));
+    return `
+      <div class="column" data-status="${s}">
+        <div class="col-head"><b>${statusLabel(s)}</b><span class="count">${arr.length}</span></div>
+        ${arr.map(t => `
+          <article class="task" ${IS_EDIT_MODE ? 'draggable="true"' : ''} data-task-id="${t.id}">
+            <span class="tag ${t.tag}">${tagLabel(t.tag)}</span>
+            <h3 style="margin:4px 0 6px;font-size:14px;color:var(--ink);">${escapeHtml(t.title)}</h3>
+            <p style="margin:0;font-size:12px;color:var(--muted);">${escapeHtml(t.desc||'')}</p>
+            <div class="meta">
+              <span>${statusLabel(t.status)}</span>
+              ${IS_EDIT_MODE ? `<button class="btn sm" onclick="editTask(${t.id}); event.stopPropagation();">✏️ Editar</button>` : ''}
+            </div>
+          </article>
+        `).join('') || '<div class="empty">Nenhuma tarefa</div>'}
+      </div>`;
+  }).join('');
+
+  if(IS_EDIT_MODE) setupTaskDragAndDrop();
+}
+
+function setupTaskDragAndDrop() {
+  document.querySelectorAll('.task').forEach(card => {
     card.addEventListener('dragstart', (e) => {
       draggedTaskId = parseInt(card.getAttribute('data-task-id'));
       card.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.stopPropagation();
     });
-
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-      columns.forEach(col => col.classList.remove('drag-over'));
-    });
-
-    card.addEventListener('click', (e) => {
-      if(!card.classList.contains('dragging')){
-        const id = parseInt(card.getAttribute('data-task-id'));
-        editTask(id);
-      }
-    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
   });
 
-  columns.forEach(col => {
-    col.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      col.classList.add('drag-over');
-    });
-
-    col.addEventListener('dragleave', (e) => {
-      if (!col.contains(e.relatedTarget)) {
-        col.classList.remove('drag-over');
-      }
-    });
-
+  document.querySelectorAll('.column').forEach(col => {
+    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
     col.addEventListener('drop', async (e) => {
       e.preventDefault();
       col.classList.remove('drag-over');
       const targetStatus = col.getAttribute('data-status');
-
-      if(draggedTaskId && targetStatus){
+      if(draggedTaskId && targetStatus) {
         const task = tasks.find(t => t.id === draggedTaskId);
-        if(task && task.status !== targetStatus){
+        if(task && task.status !== targetStatus) {
           task.status = targetStatus;
           renderAll();
-          showToast(`Movendo tarefa...`);
-          
-          const { error } = await _supabase.from('tasks').update({ status: targetStatus }).eq('id', draggedTaskId);
-          if (error) {
-            console.error(error);
-            showToast('Erro ao atualizar tarefa.');
-          } else {
-            showToast(`Tarefa movida para "${statusLabel(targetStatus)}"`);
-          }
+          await _supabase.from('tasks').update({ status: targetStatus }).eq('id', draggedTaskId);
+          showToast('Status atualizado!');
         }
       }
     });
   });
 }
 
-function renderOverview(){
- const counts={backlog:0,doing:0,review:0,done:0};tasks.forEach(t=>counts[t.status]++);
- ['backlog','doing','review','done'].forEach(s=>document.getElementById('s'+s[0].toUpperCase()+s.slice(1)).textContent=counts[s]);
- const pct=Math.round((counts.done + counts.review*.65 + counts.doing*.3)/Math.max(tasks.length,1)*100);
- document.getElementById('progressText').textContent=pct+'%';document.getElementById('progressBar').style.width=pct+'%';
- document.getElementById('themeProgress').innerHTML=TAGS.map(([k,l])=>{
-  const all=tasks.filter(t=>t.tag===k).length, done=tasks.filter(t=>t.tag===k&&t.status==='done').length;
-  if(!all)return '';
-  const p=Math.round(done/all*100);return `<div class="bar-row"><span>${l}</span><div class="bar"><i style="width:${p}%"></i></div><b>${p}%</b></div>`
- }).join('');
-}
-
-function renderDecisions(){
- const arr=tasks.filter(t=>t.tag==='decisao').slice().reverse();
- document.getElementById('decisions').innerHTML=arr.slice(0,4).map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
- document.getElementById('decisionLog').innerHTML=arr.map(t=>`
-   <div class="decision-item">
-     <div class="decision-head-row">
-       <span class="decision-title">${escapeHtml(t.title)}</span>
-       <span class="decision-badge">Decisão Registrada</span>
-     </div>
-     <div class="decision-body">${escapeHtml(t.evidence || t.desc || 'Sem detalhes informados.')}</div>
-   </div>
- `).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
-}
-
-function renderCase(){
- const steps=[
-   ['01','Contexto','discovery'],['02','As Is','asis'],['03','Evidências','dados'],['04','Benchmark','benchmark'],
-   ['05','Insights','insight'],['06','Oportunidades','hipotese'],['07','To Be','wireframe'],['08','Validação','validacao']
- ];
- document.getElementById('caseLine').innerHTML=steps.map(s=>{
-   const count = tasks.filter(t=>t.tag===s[2]).length;
-   return `<div class="case-step-card"><div class="case-step-head"><span class="case-step-num">${s[0]}</span></div><div class="case-step-title">${s[1]}</div><div class="case-step-count">📌 ${count} tarefa(s)</div></div>`;
- }).join('');
-
- const caseGrid = document.getElementById('casePortfolioGrid');
- const caseItems = tasks.filter(t => t.status === 'done' || t.imageUrl);
- if(caseItems.length === 0){
-   caseGrid.innerHTML = '<div class="empty">Nenhuma etapa concluída ou print cadastrado para o portfólio.</div>';
-   return;
- }
- caseGrid.innerHTML = caseItems.map(item => `
-   <article class="case-card">
-     <div class="case-card-content">
-       <div>
-         <div class="case-card-header"><span class="tag ${item.tag}">${tagLabel(item.tag)}</span><button class="btn sm" onclick="editTask(${item.id})">✏️ Editar</button></div>
-         <h3 class="case-card-title">${escapeHtml(item.title)}</h3>
-         <div class="case-card-desc">${escapeHtml(item.desc || 'Sem descrição.')}</div>
-         ${item.evidence ? `<div class="case-card-evidence"><strong>Evidência:</strong> ${escapeHtml(item.evidence)}</div>` : ''}
-       </div>
-       <div class="meta" style="margin-top:15px"><span>Status: ${statusLabel(item.status)}</span></div>
-     </div>
-     <div class="case-card-media">
-       ${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" alt="Print" onclick="zoomImage('${escapeHtml(item.imageUrl)}')">` : `<div class="case-media-placeholder"><span>🖼️</span>Sem print<br><button class="btn sm" style="margin-top:8px" onclick="editTask(${item.id})">+ Anexar URL</button></div>`}
-     </div>
-   </article>
- `).join('');
-}
-
-function zoomImage(url){
-  document.getElementById('imageModalImg').src = url;
-  document.getElementById('imageModal').classList.add('show');
-}
-
-/* RENDERIZADOR DO FLUXO COM SUPORTE DRAG & DROP E LINHAS DE FLUXO (LANES) */
-function renderAppFlow(){
+// FLOW BUILDER
+function renderAppFlow() {
   const container = document.getElementById('flowLanesContainer');
-  if(!appFlow || appFlow.length === 0){
-    container.innerHTML = '<div class="empty">Nenhum fluxo cadastrado. Clique em "+ Nova Etapa Principal" para começar.</div>';
-    return;
-  }
+  if(!container) return;
 
-  const lanesMap = {
-    'main': { title: 'Antes', items: [] },
+  const lanesMap = { 
+    'main': { title: 'Antes', items: [] }, 
     'sub1': { title: 'Depois', items: [] },
-    'sub2': { title: 'Fluxo de Recuperação', items: [] }
+    'sub2': { title: 'Fluxo de Recuperação', items: [] } 
   };
-
+  
   appFlow.forEach(node => {
-    const laneKey = node.laneId || 'main';
-    if(!lanesMap[laneKey]) lanesMap[laneKey] = { title: `Linha: ${laneKey}`, items: [] };
-    lanesMap[laneKey].items.push(node);
+    const lane = node.laneId || 'main';
+    if(!lanesMap[lane]) lanesMap[lane] = { title: `Linha: ${lane}`, items: [] };
+    lanesMap[lane].items.push(node);
   });
 
-  let lanesHTML = '';
-  Object.keys(lanesMap).forEach(laneKey => {
+  container.innerHTML = Object.keys(lanesMap).map(laneKey => {
     const lane = lanesMap[laneKey];
-    if(lane.items.length === 0 && laneKey !== 'main') return;
-
-    lanesHTML += `
+    if(lane.items.length === 0 && laneKey !== 'main') return '';
+    return `
       <div class="flow-lane">
         <div class="flow-lane-title">${lane.title}</div>
         ${lane.items.map((node, index) => renderNodeHTML(node, index, lane.items.length, laneKey)).join('')}
-      </div>
-    `;
-  });
+      </div>`;
+  }).join('');
 
-  container.innerHTML = lanesHTML;
-  setupFlowNodeDragAndDrop();
+  if(IS_EDIT_MODE) setupFlowNodeDragAndDrop();
+  else applyPermissionsUI();
 }
 
-function renderNodeHTML(node, index, totalInLane, laneKey){
-  const isLast = index === totalInLane - 1;
+function renderNodeHTML(node, index, total, laneKey) {
   let shapeClass = 'node-process';
   if(node.type === 'start') shapeClass = 'node-start';
   else if(node.type === 'end') shapeClass = 'node-end';
@@ -694,85 +642,54 @@ function renderNodeHTML(node, index, totalInLane, laneKey){
   else if(node.type === 'input') shapeClass = 'node-input';
 
   return `
-    <div class="flow-node-wrapper" 
-         draggable="true" 
-         data-id="${node.id}" 
-         data-lane="${laneKey}">
-      
+    <div class="flow-node-wrapper" ${IS_EDIT_MODE ? 'draggable="true"' : ''} data-id="${node.id}" data-lane="${laneKey}">
       <div class="flow-node-block">
         <div class="flow-node ${shapeClass}">
-          <span class="node-drag-handle" title="Arraste para mover">⋮⋮</span>
-          <div class="node-actions">
-            <button class="btn sm" onclick="moveNode(${node.id}, -1)" title="Mover para esquerda">←</button>
-            <button class="btn sm" onclick="moveNode(${node.id}, 1)" title="Mover para direita">→</button>
-            <button class="btn sm" onclick="editFlowNode(${node.id})">✏️</button>
-            <button class="btn sm danger" onclick="deleteFlowNode(${node.id})">✕</button>
-          </div>
+          ${IS_EDIT_MODE ? '<span class="node-drag-handle">⋮⋮</span>' : ''}
           <span class="node-text">${escapeHtml(node.label)}</span>
-
-          <div class="flow-node-quick-add">
-            <button class="btn sm" onclick="addNodeRelative(${node.id}, 'before')" title="Inserir Antes">+ Antes</button>
-            <button class="btn sm" onclick="addNodeRelative(${node.id}, 'after')" title="Inserir Depois">+ Depois</button>
-            <button class="btn sm lime" onclick="addNodeRelative(${node.id}, 'below')" title="Criar Fluxo Abaixo">+ Linha Abaixo</button>
-          </div>
+          ${IS_EDIT_MODE ? `
+            <div class="node-actions">
+              <button class="btn sm" onclick="moveNode(${node.id}, -1)">←</button>
+              <button class="btn sm" onclick="moveNode(${node.id}, 1)">→</button>
+              <button class="btn sm" onclick="editFlowNode(${node.id})">✏️</button>
+              <button class="btn sm danger" onclick="deleteFlowNode(${node.id})">✕</button>
+            </div>
+            <div class="flow-node-quick-add">
+              <button class="btn sm" onclick="addNodeRelative(${node.id}, 'before')">+ Antes</button>
+              <button class="btn sm" onclick="addNodeRelative(${node.id}, 'after')">+ Depois</button>
+              <button class="btn sm lime" onclick="addNodeRelative(${node.id}, 'below')">+ Linha Abaixo</button>
+            </div>` : ''}
         </div>
-
-        ${node.errorLabel ? `
-          <div class="flow-error-branch">
-            <div class="flow-error-line"></div>
-            <div class="flow-error-card">⚠️ ${escapeHtml(node.errorLabel)}</div>
-          </div>
-        ` : ''}
+        ${node.errorLabel ? `<div class="flow-error-branch"><div class="flow-error-line"></div><div class="flow-error-card">⚠️ ${escapeHtml(node.errorLabel)}</div></div>` : ''}
       </div>
-
-      ${!isLast ? `
-        <div class="flow-arrow-main">
-          ${node.actionLabel ? `<span class="flow-arrow-label">${escapeHtml(node.actionLabel)}</span>` : ''}
-        </div>
-      ` : ''}
-    </div>
-  `;
+      ${index < total - 1 ? `<div class="flow-arrow-main">${node.actionLabel ? `<span class="flow-arrow-label">${escapeHtml(node.actionLabel)}</span>` : ''}</div>` : ''}
+    </div>`;
 }
 
-function setupFlowNodeDragAndDrop(){
-  const wrappers = document.querySelectorAll('.flow-node-wrapper');
-
-  wrappers.forEach(w => {
+function setupFlowNodeDragAndDrop() {
+  document.querySelectorAll('.flow-node-wrapper').forEach(w => {
     w.addEventListener('dragstart', (e) => {
       draggedNodeId = parseInt(w.getAttribute('data-id'));
       w.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.stopPropagation();
     });
-
     w.addEventListener('dragend', () => {
       w.classList.remove('dragging');
       document.querySelectorAll('.flow-node-wrapper').forEach(el => el.classList.remove('drag-over'));
     });
-
-    w.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      w.classList.add('drag-over');
-    });
-
-    w.addEventListener('dragleave', () => {
-      w.classList.remove('drag-over');
-    });
-
+    w.addEventListener('dragover', (e) => { e.preventDefault(); w.classList.add('drag-over'); });
+    w.addEventListener('dragleave', () => w.classList.remove('drag-over'));
     w.addEventListener('drop', (e) => {
       e.preventDefault();
       w.classList.remove('drag-over');
       const targetNodeId = parseInt(w.getAttribute('data-id'));
-
-      if(draggedNodeId && targetNodeId && draggedNodeId !== targetNodeId){
+      if(draggedNodeId && targetNodeId && draggedNodeId !== targetNodeId) {
         reorderNodes(draggedNodeId, targetNodeId);
       }
     });
   });
 }
 
-async function reorderNodes(draggedId, targetId){
+async function reorderNodes(draggedId, targetId) {
   const draggedIndex = appFlow.findIndex(n => n.id === draggedId);
   const targetIndex = appFlow.findIndex(n => n.id === targetId);
   if(draggedIndex === -1 || targetIndex === -1) return;
@@ -782,12 +699,10 @@ async function reorderNodes(draggedId, targetId){
   
   appFlow.splice(targetIndex, 0, draggedNode);
   renderAppFlow();
-  
-  await syncFlowToSupabase();
   showToast('Fluxo reordenado.');
 }
 
-async function moveNode(id, direction){
+async function moveNode(id, direction) {
   const index = appFlow.findIndex(n => n.id === id);
   if(index === -1) return;
   const newIndex = index + direction;
@@ -798,28 +713,9 @@ async function moveNode(id, direction){
   appFlow[newIndex] = temp;
 
   renderAppFlow();
-  await syncFlowToSupabase();
 }
 
-async function syncFlowToSupabase() {
-  try {
-    for (const node of appFlow) {
-      // Prepara o objeto removendo IDs temporários numéricos do cliente se for inserção
-      const payload = { ...node };
-      if (typeof payload.id === 'number' && payload.id > 2147483647) {
-        delete payload.id; // Deixa o Supabase gerar o ID correto
-      }
-
-      const { error } = await _supabase.from('flow_nodes').upsert(payload);
-      if (error) throw error;
-    }
-  } catch (err) {
-    console.error('Erro ao sincronizar fluxo:', err);
-    alert('Erro ao sincronizar fluxo: ' + err.message);
-  }
-}
-
-async function addNodeRelative(relativeId, position){
+async function addNodeRelative(relativeId, position) {
   const relNode = appFlow.find(n => n.id === relativeId);
   if(!relNode) return;
 
@@ -829,7 +725,6 @@ async function addNodeRelative(relativeId, position){
   }
 
   const newNode = {
-    id: Date.now(),
     laneId: targetLane,
     label: 'Nova Etapa',
     type: 'process',
@@ -837,30 +732,152 @@ async function addNodeRelative(relativeId, position){
     errorLabel: ''
   };
 
-  const relIndex = appFlow.findIndex(n => n.id === relativeId);
-  if(position === 'before'){
-    appFlow.splice(relIndex, 0, newNode);
-  } else {
-    appFlow.splice(relIndex + 1, 0, newNode);
+  const { data: inserted, error } = await _supabase.from('flow_nodes').insert([newNode]).select();
+  if(!error && inserted && inserted[0]){
+    const relIndex = appFlow.findIndex(n => n.id === relativeId);
+    appFlow.splice(position === 'before' ? relIndex : relIndex + 1, 0, inserted[0]);
+    renderAppFlow();
+    editFlowNode(inserted[0].id);
+  }
+}
+
+// DECISIONS & CASE
+function renderDecisions() {
+  const arr = tasks.filter(t => t.tag === 'decisao').slice().reverse();
+  const dShort = document.getElementById('decisions');
+  if(dShort) {
+    dShort.innerHTML = arr.slice(0,4).map(t=>`<div class="decision"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.evidence||t.desc||'')}</span></div>`).join('')||'<div class="empty">Nenhuma decisão registrada.</div>';
   }
 
-  await _supabase.from('flow_nodes').insert([newNode]);
-  renderAppFlow();
-  editFlowNode(newNode.id);
+  const dLog = document.getElementById('decisionLog');
+  if(dLog) {
+    dLog.innerHTML = arr.map(t => `
+      <div class="decision-item">
+        <div class="decision-head-row">
+          <span class="decision-title">${escapeHtml(t.title)}</span>
+          <span class="decision-badge">Decisão Registrada</span>
+        </div>
+        <div class="decision-body">${escapeHtml(t.evidence || t.desc || '')}</div>
+      </div>`).join('') || '<div class="empty">Nenhuma decisão registrada.</div>';
+  }
 }
 
-function openFlowNodeModal(){
-  editingFlowNodeId = null;
-  document.getElementById('flowNodeModalTitle').textContent = 'Nova etapa do fluxo';
-  document.getElementById('flowNodeForm').reset();
-  document.getElementById('flowNodeModal').classList.add('show');
+function renderCase() {
+  const steps=[
+    ['01','Contexto','discovery'],['02','As Is','asis'],['03','Evidências','dados'],['04','Benchmark','benchmark'],
+    ['05','Insights','insight'],['06','Oportunidades','hipotese'],['07','To Be','wireframe'],['08','Validação','validacao']
+  ];
+  const caseLine = document.getElementById('caseLine');
+  if(caseLine) {
+    caseLine.innerHTML = steps.map(s => {
+      const count = tasks.filter(t=>t.tag===s[2]).length;
+      return `<div class="case-step-card"><div class="case-step-head"><span class="case-step-num">${s[0]}</span></div><div class="case-step-title">${s[1]}</div><div class="case-step-count">📌 ${count} tarefa(s)</div></div>`;
+    }).join('');
+  }
+
+  const caseGrid = document.getElementById('casePortfolioGrid');
+  if(!caseGrid) return;
+
+  const caseItems = tasks.filter(t => t.status === 'done' || t.imageUrl);
+  if(caseItems.length === 0) {
+    caseGrid.innerHTML = '<div class="empty">Nenhum item concluído para o portfólio.</div>';
+    return;
+  }
+
+  caseGrid.innerHTML = caseItems.map(item => `
+    <article class="case-card">
+      <div class="case-card-content">
+        <div>
+          <div class="case-card-header">
+            <span class="tag ${item.tag}">${tagLabel(item.tag)}</span>
+            ${IS_EDIT_MODE ? `<button class="btn sm" onclick="editTask(${item.id})">✏️ Editar</button>` : ''}
+          </div>
+          <h3 class="case-card-title">${escapeHtml(item.title)}</h3>
+          <div class="case-card-desc">${escapeHtml(item.desc || '')}</div>
+          ${item.evidence ? `<div class="case-card-evidence"><strong>Evidência:</strong> ${escapeHtml(item.evidence)}</div>` : ''}
+        </div>
+      </div>
+      <div class="case-card-media">
+        ${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" onclick="zoomImage('${escapeHtml(item.imageUrl)}')">` : '<div class="case-media-placeholder">Sem print</div>'}
+      </div>
+    </article>`).join('');
 }
 
-function closeFlowNodeModal(){
-  document.getElementById('flowNodeModal').classList.remove('show');
+// OPERAÇÕES DE FORMULÁRIO (TASKS E FLUXO)
+async function saveTask(e) {
+  e.preventDefault();
+  if(!IS_EDIT_MODE) return;
+
+  const data = {
+    title: document.getElementById('fTitle').value.trim(),
+    tag: document.getElementById('fTag').value,
+    status: document.getElementById('fStatus').value,
+    desc: document.getElementById('fDesc').value.trim(),
+    evidence: document.getElementById('fEvidence').value.trim()
+  };
+
+  try {
+    if (editingId) {
+      await _supabase.from('tasks').update(data).eq('id', editingId);
+      Object.assign(tasks.find(t => t.id === editingId), data);
+    } else {
+      const { data: inserted, error } = await _supabase.from('tasks').insert([data]).select();
+      if (error) throw error;
+      if (inserted && inserted[0]) tasks.push(inserted[0]);
+    }
+
+    closeModal();
+    renderAll();
+    showToast('Tarefa salva!');
+  } catch(err) {
+    alert('Erro ao salvar tarefa: ' + err.message);
+  }
+}
+
+async function deleteTask(){
+  if(!editingId || !IS_EDIT_MODE) return;
+  if(!confirm("Deseja realmente excluir esta tarefa?")) return;
+ 
+  await _supabase.from('tasks').delete().eq('id', editingId);
+  tasks = tasks.filter(t => t.id !== editingId);
+ 
+  closeModal();
+  renderAll();
+  showToast('Tarefa excluída.');
+}
+
+async function saveFlowNode(e) {
+  e.preventDefault();
+  if(!IS_EDIT_MODE) return;
+
+  const nodeData = {
+    label: document.getElementById('fnLabel').value.trim(),
+    type: document.getElementById('fnType').value,
+    laneId: document.getElementById('fnLane').value,
+    actionLabel: document.getElementById('fnActionLabel').value.trim(),
+    errorLabel: document.getElementById('fnErrorLabel').value.trim()
+  };
+
+  try {
+    if(editingFlowNodeId) {
+      await _supabase.from('flow_nodes').update(nodeData).eq('id', editingFlowNodeId);
+      Object.assign(appFlow.find(n => n.id === editingFlowNodeId), nodeData);
+    } else {
+      const { data: inserted, error } = await _supabase.from('flow_nodes').insert([nodeData]).select();
+      if (error) throw error;
+      if (inserted && inserted[0]) appFlow.push(inserted[0]);
+    }
+
+    closeFlowNodeModal();
+    renderAll();
+    showToast('Etapa salva!');
+  } catch(err) {
+    alert('Erro ao salvar etapa: ' + err.message);
+  }
 }
 
 function editFlowNode(id){
+  if(!IS_EDIT_MODE) return;
   const node = appFlow.find(n => n.id === id);
   if(!node) return;
   editingFlowNodeId = id;
@@ -874,143 +891,100 @@ function editFlowNode(id){
 }
 
 async function deleteFlowNode(id){
-  if(!confirm("Deseja realmente remover esta etapa do fluxo?")) return;
-  appFlow = appFlow.filter(n => n.id !== id);
-  renderAppFlow();
-  
+  if(!IS_EDIT_MODE || !confirm("Remover esta etapa do fluxo?")) return;
   await _supabase.from('flow_nodes').delete().eq('id', id);
+  appFlow = appFlow.filter(n => n.id !== id);
+  renderAll();
   showToast('Etapa removida.');
 }
 
-async function saveFlowNode(e){
-  e.preventDefault();
-  const label = document.getElementById('fnLabel').value.trim();
-  const type = document.getElementById('fnType').value;
-  const laneId = document.getElementById('fnLane').value;
-  const actionLabel = document.getElementById('fnActionLabel').value.trim();
-  const errorLabel = document.getElementById('fnErrorLabel').value.trim();
-
-  try {
-    if(editingFlowNodeId){
-      const node = appFlow.find(n => n.id === editingFlowNodeId);
-      if(node){ 
-        node.label = label; 
-        node.type = type; 
-        node.laneId = laneId;
-        node.actionLabel = actionLabel;
-        node.errorLabel = errorLabel;
-
-        const { error } = await _supabase.from('flow_nodes').update({ label, type, laneId, actionLabel, errorLabel }).eq('id', editingFlowNodeId);
-        if (error) throw error;
-      }
-    } else {
-      const dataNode = { laneId, label, type, actionLabel, errorLabel };
-      const { data: inserted, error } = await _supabase.from('flow_nodes').insert([dataNode]).select();
-      if (error) throw error;
-      if (inserted && inserted[0]) appFlow.push(inserted[0]);
-    }
-
-    closeFlowNodeModal();
-    renderAppFlow();
-    showToast('Fluxo atualizado com sucesso!');
-  } catch (err) {
-    console.error('Erro no Supabase:', err);
-    alert('Erro ao gravar no fluxo: ' + err.message);
-  }
+function openCaseItemModal(){
+  if(!IS_EDIT_MODE) return alert("Adicione ?admin=true na URL para editar.");
+  editingId=null;
+  document.getElementById('caseModalTitle').textContent='Nova Seção do Case';
+  document.getElementById('caseItemForm').reset();
+  document.getElementById('caseItemModal').classList.add('show');
 }
 
-
-/* OUTROS MODAIS E TAREFAS */
-function openTask(prefill){
- editingId=null;
- document.getElementById('modalTitle').textContent='Nova tarefa';
- document.getElementById('taskForm').reset();
- document.getElementById('btnDeleteTask').style.display = 'none';
- if(prefill)document.getElementById('fTag').value=prefill;
- document.getElementById('modal').classList.add('show');
-}
-
-function editTask(id){
- const t=tasks.find(x=>x.id===id);if(!t)return;editingId=id;
- document.getElementById('modalTitle').textContent='Editar tarefa';
- document.getElementById('btnDeleteTask').style.display = 'block';
- document.getElementById('fTitle').value=t.title;
- document.getElementById('fTag').value=t.tag;
- document.getElementById('fStatus').value=t.status;
- document.getElementById('fDesc').value=t.desc||'';
- document.getElementById('fEvidence').value=t.evidence||'';
- document.getElementById('modal').classList.add('show');
-}
-
-async function saveTask(e) {
-  e.preventDefault();
-  
-  const data = {
-    title: document.getElementById('fTitle').value.trim(),
-    tag: document.getElementById('fTag').value,
-    status: document.getElementById('fStatus').value,
-    desc: document.getElementById('fDesc').value.trim(),
-    evidence: document.getElementById('fEvidence').value.trim()
-  };
-
-  try {
-    if (editingId) {
-      const { error } = await _supabase.from('tasks').update(data).eq('id', editingId);
-      if (error) throw error;
-      Object.assign(tasks.find(t => t.id === editingId), data);
-    } else {
-      // Recebe o item recém criado direto do Supabase com seu ID oficial
-      const { data: inserted, error } = await _supabase.from('tasks').insert([data]).select();
-      if (error) throw error;
-      if (inserted && inserted[0]) tasks.push(inserted[0]);
-    }
-
-    closeModal();
-    renderAll();
-    showToast('Tarefa salva com sucesso!');
-  } catch (err) {
-    console.error('Erro no Supabase:', err);
-    alert('Erro ao gravar tarefa: ' + (err.message || 'Verifique o schema no Supabase'));
-  }
-}
-
-async function deleteTask(){
- if(!editingId) return;
- if(!confirm("Deseja realmente excluir esta tarefa?")) return;
- 
- tasks = tasks.filter(t => t.id !== editingId);
- await _supabase.from('tasks').delete().eq('id', editingId);
- 
- closeModal();
- renderAll();
- showToast('Tarefa excluída.');
-}
-
-function openCaseItemModal(){editingId=null;document.getElementById('caseModalTitle').textContent='Nova Seção do Case';document.getElementById('caseItemForm').reset();document.getElementById('caseItemModal').classList.add('show')}
-function closeCaseItemModal(){document.getElementById('caseItemModal').classList.remove('show')}
+function closeCaseItemModal(){ document.getElementById('caseItemModal').classList.remove('show'); }
 
 async function saveCaseItem(e){
- e.preventDefault();
- const newItem = {id:Date.now(),title:ciTitle.value.trim(),tag:ciTag.value,status:'done',desc:ciDesc.value.trim(),evidence:ciEvidence.value.trim(),imageUrl:ciImageUrl.value.trim()};
- tasks.push(newItem);
- 
- await _supabase.from('tasks').insert([newItem]);
- closeCaseItemModal();
- renderAll();
- showToast('Seção adicionada ao Case!');
+  e.preventDefault();
+  if(!IS_EDIT_MODE) return;
+
+  const newItem = {
+    title: document.getElementById('ciTitle').value.trim(),
+    tag: document.getElementById('ciTag').value,
+    status: 'done',
+    desc: document.getElementById('ciDesc').value.trim(),
+    evidence: document.getElementById('ciEvidence').value.trim(),
+    imageUrl: document.getElementById('ciImageUrl').value.trim()
+  };
+
+  const { data: inserted } = await _supabase.from('tasks').insert([newItem]).select();
+  if(inserted && inserted[0]) tasks.push(inserted[0]);
+
+  closeCaseItemModal();
+  renderAll();
+  showToast('Seção adicionada ao Case!');
 }
 
-function closeModal(){document.getElementById('modal').classList.remove('show')}
-function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',1800)}
-function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+// NAVEGAÇÃO E MODAIS
+function openTask(prefill) {
+  if(!IS_EDIT_MODE) return alert("Modo de visualização ativo. Adicione ?admin=true na URL para editar.");
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Nova tarefa';
+  document.getElementById('taskForm').reset();
+  document.getElementById('btnDeleteTask').style.display = 'none';
+  if(prefill) document.getElementById('fTag').value = prefill;
+  document.getElementById('modal').classList.add('show');
+}
 
-document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');document.getElementById('crumb').textContent=b.textContent}));
-document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
-document.getElementById('flowNodeModal').addEventListener('click',e=>{if(e.target.id==='flowNodeModal')closeFlowNodeModal()});
-document.getElementById('caseItemModal').addEventListener('click',e=>{if(e.target.id==='caseItemModal')closeCaseItemModal()});
+function editTask(id) {
+  if(!IS_EDIT_MODE) return;
+  const t = tasks.find(x => x.id === id);
+  if(!t) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar tarefa';
+  document.getElementById('btnDeleteTask').style.display = 'block';
+  document.getElementById('fTitle').value = t.title;
+  document.getElementById('fTag').value = t.tag;
+  document.getElementById('fStatus').value = t.status;
+  document.getElementById('fDesc').value = t.desc || '';
+  document.getElementById('fEvidence').value = t.evidence || '';
+  document.getElementById('modal').classList.add('show');
+}
 
-populateFilters();
-loadDataFromSupabase();
+function openFlowNodeModal(){
+  if(!IS_EDIT_MODE) return alert("Adicione ?admin=true na URL para editar.");
+  editingFlowNodeId = null;
+  document.getElementById('flowNodeModalTitle').textContent = 'Nova etapa do fluxo';
+  document.getElementById('flowNodeForm').reset();
+  document.getElementById('flowNodeModal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function closeFlowNodeModal() { document.getElementById('flowNodeModal').classList.remove('show'); }
+function zoomImage(url) { document.getElementById('imageModalImg').src = url; document.getElementById('imageModal').classList.add('show'); }
+function showToast(t) { const el = document.getElementById('toast'); if(el){ el.textContent = t; el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 1800); } }
+
+// Eventos de Navegação
+document.querySelectorAll('.nav button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(b.dataset.view).classList.add('active');
+    document.getElementById('crumb').textContent = b.textContent;
+  });
+});
+
+document.getElementById('modal').addEventListener('click', e => { if(e.target.id === 'modal') closeModal(); });
+document.getElementById('flowNodeModal').addEventListener('click', e => { if(e.target.id === 'flowNodeModal') closeFlowNodeModal(); });
+document.getElementById('caseItemModal').addEventListener('click', e => { if(e.target.id === 'caseItemModal') closeCaseItemModal(); });
+
+// Inicializar Aplicação
+initApp();
 </script>
 </body>
 </html>
