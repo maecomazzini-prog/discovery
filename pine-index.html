@@ -142,6 +142,7 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 .decision-item:hover{border-color:var(--pine-2);box-shadow:var(--shadow)}
 .decision-head-row{display:flex;justify-content:space-between;align-items:center}
 .decision-title{font-weight:750;font-size:14px;color:var(--pine-dark)}
+.decision-badge-wrap{display:flex;align-items:center;gap:6px}
 .decision-badge{background:var(--gold-soft);color:var(--pine-dark);font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.03em}
 .decision-body{font-size:12px;color:var(--muted);line-height:1.5}
 
@@ -304,7 +305,7 @@ h1{font-size:30px;line-height:1.05;margin:7px 0 8px;letter-spacing:-.03em}
 </main>
 </div>
 
-<!-- MODAL DE TAREFAS -->
+<!-- MODAL DE TAREFAS / DECISÕES -->
 <div class="modal" id="modal">
 <div class="dialog">
   <div class="dialog-head"><div><div class="eyebrow">Workspace</div><h2 id="modalTitle" style="margin:5px 0">Nova tarefa</h2></div><button class="close" onclick="closeModal()">×</button></div>
@@ -661,7 +662,7 @@ async function reorderNodes(draggedId, targetId) {
   showToast('Fluxo reordenado.');
 }
 
-// DECISIONS & CASE
+// DECISIONS & CASE (EDIÇÃO / EXCLUSÃO DE DECISÕES ADICIONADA)
 function renderDecisions() {
   const arr = tasks.filter(t => t.tag === 'decisao').slice().reverse();
   const dShort = document.getElementById('decisions');
@@ -675,11 +676,26 @@ function renderDecisions() {
       <div class="decision-item">
         <div class="decision-head-row">
           <span class="decision-title">${escapeHtml(t.title)}</span>
-          <span class="decision-badge">Decisão Registrada</span>
+          <div class="decision-badge-wrap">
+            <span class="decision-badge">Decisão Registrada</span>
+            ${IS_EDIT_MODE ? `
+              <button class="btn sm" onclick="editTask(${t.id})">✏️ Editar</button>
+              <button class="btn sm danger" onclick="deleteDecisionDirectly(${t.id})">✕ Excluir</button>
+            ` : ''}
+          </div>
         </div>
         <div class="decision-body">${escapeHtml(t.evidence || t.desc || '')}</div>
       </div>`).join('') || '<div class="empty">Nenhuma decisão registrada.</div>';
   }
+}
+
+async function deleteDecisionDirectly(id) {
+  if (!IS_EDIT_MODE || !confirm("Deseja realmente excluir este registro de decisão?")) return;
+  const targetId = parseInt(id, 10);
+  await _supabase.from('tasks').delete().eq('id', targetId);
+  tasks = tasks.filter(t => t.id !== targetId);
+  renderAll();
+  showToast('Decisão excluída.');
 }
 
 function renderCase() {
@@ -750,15 +766,15 @@ async function saveTask(e) {
 
     closeModal();
     renderAll();
-    showToast('Tarefa salva!');
+    showToast('Salvo com sucesso!');
   } catch(err) {
-    alert('Erro ao salvar tarefa: ' + err.message);
+    alert('Erro ao salvar: ' + err.message);
   }
 }
 
 async function deleteTask(){
   if(!editingId || !IS_EDIT_MODE) return;
-  if(!confirm("Deseja realmente excluir esta tarefa?")) return;
+  if(!confirm("Deseja realmente excluir este item?")) return;
  
   const targetId = parseInt(editingId, 10);
   await _supabase.from('tasks').delete().eq('id', targetId);
@@ -766,7 +782,7 @@ async function deleteTask(){
  
   closeModal();
   renderAll();
-  showToast('Tarefa excluída.');
+  showToast('Item excluído.');
 }
 
 async function saveFlowNode(e) {
@@ -873,7 +889,7 @@ function editTask(id) {
   const t = tasks.find(x => x.id === targetId);
   if(!t) return;
   editingId = targetId;
-  document.getElementById('modalTitle').textContent = 'Editar tarefa';
+  document.getElementById('modalTitle').textContent = 'Editar item';
   document.getElementById('btnDeleteTask').style.display = 'block';
   document.getElementById('fTitle').value = t.title;
   document.getElementById('fTag').value = t.tag;
